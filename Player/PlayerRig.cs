@@ -62,6 +62,17 @@ public class PlayerRig : UdonSharpBehaviour
         }
     }
 
+    //Method to reload the gun
+    public void OnCollisionEnter(Collision other)
+    {
+        //Reload the gun if the gun collider collides with the PlayerRig collider
+        if(other.gameObject == equippedWeapon)
+        {
+            Debug.Log("Reloading gun.");
+            equippedWeapon.GetComponent<UdonBehaviour>().SendCustomEvent("Reload");
+        }
+    }
+
     public void SetObjectPool(VRCObjectPool pool)
     {
         //Set the objectPool to the pool passed in

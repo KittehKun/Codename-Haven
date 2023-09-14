@@ -1,6 +1,7 @@
 ﻿
 using UdonSharp;
 using UnityEngine;
+using VRC.Udon;
 
 //This script is used to shoot the pistol using a Raycast
 public class PistolShoot : UdonSharpBehaviour
@@ -25,6 +26,9 @@ public class PistolShoot : UdonSharpBehaviour
 
     //Particle System
     public ParticleSystem muzzleFlashFX; //Assigned in Unity | Used for playing the muzzle flash effect on weapons
+
+    //Animator
+    public Animator pistolAnimator; //Assigned in Unity | Used for playing the pistol's animations
 
     void Start()
     {
@@ -103,6 +107,9 @@ public class PistolShoot : UdonSharpBehaviour
     //Method used to facilitate bullet logic
     public void Shoot()
     {
+        //Play Shoot animation
+        pistolAnimator.Play("Shoot");
+        
         //Play gunshot sound
         GunShot.Play();
 
@@ -115,9 +122,11 @@ public class PistolShoot : UdonSharpBehaviour
         //Define RaycastHit for finding data on what the Ray hit | Used in "out" statement of Physics.Raycast method
         //Cast out Ray and output GameObject that the Ray hit
         //Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out HitData, Range) | This line of code returns true or false if the Ray hits something
-        if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out RaycastHit HitData, Range)) //Check to see if Ray hit any colliders
+        if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out RaycastHit HitData, Range, LayerMask.GetMask("Enemy"))) //Check to see if Ray hit any colliders
         {
-            //Leave blank until Enemy AI is implemented on their own layer
+            //With layer mask defined, we can now check to see if the Ray hit an enemy
+            //Call TakeDamage method on enemy
+            HitData.transform.gameObject.GetComponent<EnemyScript>().TakeDamage(Damage);
         }
     }
 
@@ -135,10 +144,12 @@ public class PistolShoot : UdonSharpBehaviour
         //Play reload sound
         ReloadSound.PlayOneShot(ReloadSound.clip);
 
-        //Reset AmmoCount to 7
+        //Reset AmmoCount
         currentAmmo = MaxAmmo;
 
         this.SendCustomEventDelayedSeconds("ResetReloadingFlag", 0.33f);
+
+        pistolAnimator.Play("BeginReload");
     }
 
     public void ResetReloadingFlag()

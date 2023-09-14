@@ -159,7 +159,9 @@ public class SniperShoot : UdonSharpBehaviour
         //Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out HitData, Range) | This line of code returns true or false if the Ray hits something
         if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out RaycastHit HitData, Range)) //Check to see if Ray hit any colliders
         {
-            //Leave blank until Enemy AI is implemented on their own layer
+            //With layer mask defined, we can now check to see if the Ray hit an enemy
+            //Call TakeDamage method on enemy
+            HitData.transform.gameObject.GetComponent<EnemyScript>().TakeDamage(Damage);
         }
     }
 

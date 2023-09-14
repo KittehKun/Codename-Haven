@@ -7,12 +7,11 @@ using VRC.Udon;
 
 public class PlayerStats : UdonSharpBehaviour
 {
-    
-    public int PlayerMoney {get; set;}
+    public int PlayerMoney{get; set;}
     public GameObject[] traderGUIs; //Assigned in Unity | Array needed for changing all shopkeeper displays on startup
     void Start()
     {
-        PlayerMoney = 1000; //Starting money for Player
+        PlayerMoney = 10000; //Starting money for Player
         foreach(GameObject traderScreen in traderGUIs)
         {
             traderScreen.GetComponent<Text>().text = $"${PlayerMoney}";
