@@ -18,7 +18,6 @@ public class SMGShoot : UdonSharpBehaviour
     public int currentAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
     public int maxAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
     public bool isReloading = false; //Used for checking if player is reloading or not
-    public Animator smgAnimator; //Assigned in Unity inspector | Used for playing SMG animations and for shot delay
     public bool fullAuto; //Used for checking if gun is full auto or not
     public float fullAutoDelay; //Used for setting full auto delay | Assigned in Unity inspector
 
@@ -28,6 +27,9 @@ public class SMGShoot : UdonSharpBehaviour
     //Particle System
     public ParticleSystem muzzleFlashFX; //Assigned in Unity | Used for playing the muzzle flash animation
 
+    //Animator
+    public Animator smgAnimator; //Assigned in Unity | Used for playing the SMG's animations
+    
     void Start()
     {
         //Find the barrel of the gun
@@ -85,6 +87,9 @@ public class SMGShoot : UdonSharpBehaviour
 
         //Set isReloading to false after 2 seconds
         this.GetComponent<UdonBehaviour>().SendCustomEventDelayedSeconds("ResetReloadingFlag", 1f);
+
+        //Play reload animation
+        smgAnimator.Play("BeginReload");
     }
 
     public void ResetReloadingFlag()
@@ -141,12 +146,14 @@ public class SMGShoot : UdonSharpBehaviour
     //Method used to facilitate bullet logic
     public void Shoot()
     {
+        //Play Shoot animation
+        smgAnimator.Play("Shoot");
 
         //Play gunshot sound
-        SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "PlayGunShot");
+        GunShot.Play();
 
         //Play muzzle flash
-        SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "PlayMuzzleFlash");
+        PlayMuzzleFlash();
 
         //Subtract 1 from AmmoCount
         currentAmmo -= 1;
@@ -157,7 +164,7 @@ public class SMGShoot : UdonSharpBehaviour
         //Define RaycastHit for finding data on what the Ray hit | Used in "out" statement of Physics.Raycast method
         //Cast out Ray and output GameObject that the Ray hit
         //Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out HitData, Range) | This line of code returns true or false if the Ray hits something
-        if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out RaycastHit HitData, Range)) //Check to see if Ray hit any colliders
+        if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out RaycastHit HitData, Range, LayerMask.GetMask("Enemy"))) //Check to see if Ray hit any colliders
         {
             //With layer mask defined, we can now check to see if the Ray hit an enemy
             //Call TakeDamage method on enemy
@@ -172,8 +179,4 @@ public class SMGShoot : UdonSharpBehaviour
 
     }
 
-    public void PlayGunShot()
-    {
-        GunShot.PlayOneShot(GunShot.clip);
-    }
 }

@@ -127,6 +127,9 @@ public class ShotgunShoot : UdonSharpBehaviour
 
         //Set isReloading to false after 2 seconds
         this.GetComponent<UdonBehaviour>().SendCustomEventDelayedSeconds("ResetReloadingFlag", 1f);
+    
+        //Play reload animation
+        shotgunAnimator.Play("BeginReload");
     }
 
     public void ResetReloadingFlag()
@@ -149,6 +152,9 @@ public class ShotgunShoot : UdonSharpBehaviour
     //Method used to facilitate bullet logic
     public void Shoot()
     {
+        //Play Shoot animation
+        shotgunAnimator.Play("Shoot");
+        
         //Set isReady to false
         isReady = false;
 

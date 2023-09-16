@@ -17,7 +17,6 @@ public class ARShoot : UdonSharpBehaviour
     //Ammo Variables
     public int currentAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
     public int MaxAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
-    public Animator arAnimator; //Assigned in Unity inspector | Used for playing AR animations and for shot delay
 
     //Flags
     public bool fullAuto; //Used for checking if gun is full auto or not
@@ -27,6 +26,9 @@ public class ARShoot : UdonSharpBehaviour
 
     //Particle System
     public ParticleSystem muzzleFlashFX; //Assigned in Unity inspector | Used for playing muzzle flash particle system
+
+    //Animator
+    public Animator arAnimator; //Assigned in Unity inspector | Used for playing AR animations
 
     void Start()
     {
@@ -84,6 +86,9 @@ public class ARShoot : UdonSharpBehaviour
 
         //Set isReloading to false after 2 seconds
         this.GetComponent<UdonBehaviour>().SendCustomEventDelayedSeconds("ResetReloadingFlag", 1f);
+    
+        //Play reload animation
+        arAnimator.Play("BeginReload");
     }
 
     public void ResetReloadingFlag()
@@ -141,13 +146,14 @@ public class ARShoot : UdonSharpBehaviour
     //Method used to facilitate bullet logic
     public void Shoot()
     {
+        //Play Shoot animation
+        arAnimator.Play("Shoot");
+        
         //Play gunshot sound
         SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "PlayGunShot");
 
         //Play muzzle effect FX
         SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "PlayMuzzleFX");
-
-        arAnimator.Play("ShotDelay"); //Play shot delay animation
 
         //Subtract 1 from currentAmmo
         currentAmmo -= 1;
@@ -158,7 +164,7 @@ public class ARShoot : UdonSharpBehaviour
         //Define RaycastHit for finding data on what the Ray hit | Used in "out" statement of Physics.Raycast method
         //Cast out Ray and output GameObject that the Ray hit
         //Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out HitData, Range) | This line of code returns true or false if the Ray hits something
-        if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out RaycastHit HitData, Range)) //Check to see if Ray hit any colliders
+        if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out RaycastHit HitData, Range, LayerMask.GetMask("Enemy"))) //Check to see if Ray hit any colliders
         {
             //With layer mask defined, we can now check to see if the Ray hit an enemy
             //Call TakeDamage method on enemy
