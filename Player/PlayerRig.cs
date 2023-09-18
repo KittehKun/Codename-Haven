@@ -25,6 +25,9 @@ public class PlayerRig : UdonSharpBehaviour
 
         //Rotate the spawnArea 90 degrees on the y axis
         spawnArea.transform.Rotate(0, 90, 0);
+
+        //Disable the mesh renderer for the spawnArea
+        spawnArea.GetComponent<MeshRenderer>().enabled = false;
     }
 
     void Update()

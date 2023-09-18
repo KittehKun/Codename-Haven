@@ -9,8 +9,6 @@ public class PlayerHitbox : UdonSharpBehaviour
     private VRCPlayerApi player;
     private Vector3 headTrackingPos; //Head tracking position
     public GameObject hitbox; //Sphere Hitbox | Assigned in Unity
-    public int health = 150; //Player health | Assigned in Unity
-    public PlayerRaidManager playerRaidManager; //Player Raid Manager | Assigned in Unity | Used for resetting player inventory
     
     void Start()
     {
@@ -26,27 +24,5 @@ public class PlayerHitbox : UdonSharpBehaviour
         headTrackingPos = player.GetTrackingData(VRCPlayerApi.TrackingDataType.Head).position;
         //Set hitbox position to player's head position
         hitbox.transform.position = headTrackingPos;
-    }
-
-    //Function to handle player taking damage
-    public void TakeDamage(int damage)
-    {
-        //Subtract damage from health
-        health -= damage;
-        //Update HP counter
-        PlayerHUD.UpdateHPCount(health);
-        //Check to see if player is dead
-        if(health <= 0)
-        {
-            //Kill player
-            Die();
-        }
-    }
-
-    //Function will call the reset function on the PlayerRaidInventory script and teleport the player back to the spawn point
-    private void Die()
-    {
-        //Reset Player and teleport to spawn point
-        playerRaidManager.ResetPlayer(true);
     }
 }

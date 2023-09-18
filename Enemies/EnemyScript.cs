@@ -8,111 +8,174 @@ using VRC.Udon;
 //The purpose of this script is to handle enemy logic - will be attached to enemy prefabs
 public class EnemyScript : UdonSharpBehaviour
 {
-    //Enemy Movement and Health
-    public NavMeshAgent agent; //NavMeshAgent component | Assigned in Unity
-    public float range; //Range of enemy | Assigned in Unity
-    public Transform centerPoint; //Center of the area the agents wants to move around | Assigned in Unity
-    public int enemyHealth = 100; //Used to track enemy health | Variable is public to display in inspector
-    private Transform spawnLocation; //Used to track the enemy's spawn location | Assigned in Unity
-    
+    //public Collider enemyRangeCollider; //This collider will be used to detect players using the OnPlayerTriggerEnter() event from the VRC Api
+    public NavMeshAgent agent; //This is the navmesh agent that will be used to move the enemy
+    public Vector3 targetDestination; //This is the target destination that the enemy will move to
+    public Vector3 spawnLocation; //This is the spawn location of the enemy
+    public float enemyRange = 10f; //This is the range that the enemy will attempt to move to
+    public int enemyHealth = 100; //This is the health of the enemy
+
     //Flags
-    public bool isMoving = false; //Used to check if enemy is moving | Variable is public to display in inspector
-    public bool isWaiting = false; //Used to check if enemy is waiting | Variable is public to display in inspector
-    public bool isFighting = false; //Used to check if enemy is fighting | Variable is public to display in inspector
-    
-    //Triggers
-    public Collider playerHitbox; //Used to check if player is in range of enemy | Assigned in Unity
-    
-    void Awake()
+    public bool isMoving = false; //This flag will be used to determine if the enemy is moving
+    public bool hasDestination = false; //This flag will be used to determine if the enemy has a target destination
+    public bool attackingPlayer = false; //This flag will be used to determine if the enemy is attacking a player
+    public bool isWaiting = false; //This flag will be used to determine if the enemy is waiting at a destination
+    private bool waitStarted = false; //This flag will be used to determine if the wait has started
+
+    //PlayerHitbox Script
+    public PlayerStats playerStats; //Assigned in Unity | This script will be used to damage the player
+
+    //VRCPlayer API
+    private VRCPlayerApi localPlayer; //This is the local player | Assigned by Collider trigger
+
+    void Start()
     {
-        //Set spawnLocation to the enemy's spawn location
-        spawnLocation = this.transform;
+        //Set the spawnLocation to the enemy's current position
+        spawnLocation = this.transform.position;
     }
-    
+
     void Update()
     {
-        if(!isMoving && !isWaiting && !isFighting)
+        //If the enemy does not have a target destination, generate a random one
+        if (!hasDestination && !isMoving && !attackingPlayer && !isWaiting)
         {
-            //Move to random point
-            MoveToRandomPoint();
+            GenerateRandomDestination();
         }
 
-        if(isMoving)
+        //If the enemy has a target destination, check if it has reached it
+        if (hasDestination)
         {
-            //Check to see if agent is at the destination
-            if(agent.remainingDistance <= agent.stoppingDistance)
+            //If the enemy has reached its destination, set the hasDestination flag to false
+            if (agent.remainingDistance < 1f || agent.acceleration < 0.01f)
             {
-                //Set isMoving to false
-                isMoving = false; //Agent reached the destination
-                isWaiting = true; //Agent will wait for 5 seconds before moving again
-                AgentWait();
+                hasDestination = false;
+                isMoving = false;
+                isWaiting = true;
+
+                if(!waitStarted)
+                {
+                    SendCustomEventDelayedSeconds("ResetMovementFlags", 5f);
+                    waitStarted = true;
+                }
             }
         }
 
-    }
+        if(attackingPlayer)
+        {
+            hasDestination = false;
+            isMoving = false;
 
-    //Method is used to find a random point on the NavMesh | Returns the closest point on the NavMesh to the random point and returns true if it finds a point
-    public bool RandomPoint(Vector3 center, float range, out Vector3 result)
-    {
-        //Get random point in range
-        Vector3 randomPoint = center + Random.insideUnitSphere * range;
-        //Check to see if point is on NavMesh
-        if (NavMesh.SamplePosition(randomPoint, out NavMeshHit hit, 1.0f, NavMesh.AllAreas))
-        {
-            //Set result to randomPoint
-            result = hit.position;
-            //Return true
-            return true;
-        }
-        else
-        {
-            //Set result to Vector3.zero
-            result = Vector3.zero;
-            //Return false
-            return false;
+            //Look at the player
+            transform.LookAt(localPlayer.GetPosition());
         }
     }
 
-    //Method is used to move the agent to a random point on the NavMesh
-    public void MoveToRandomPoint()
+    public void ResetMovementFlags()
     {
-        //Define Vector3 for random point
-        Vector3 randomPoint;
-        //Check to see if RandomPoint method returns true
-        if (RandomPoint(centerPoint.position, range, out randomPoint))
-        {
-            //Set agent's destination to randomPoint
-            agent.SetDestination(randomPoint);
-            isMoving = true;
-        }
-    }
-
-    public void AgentWait()
-    {
-        this.SendCustomEventDelayedSeconds("MoveToRandomPoint", 5.0f); //Call MoveToRandomPoint after 5 seconds
-        this.SendCustomEventDelayedSeconds("ResetWaitFlag", 5.0f); //Call ResetWaitFlag after 5 seconds
-    }
-
-    public void ResetWaitFlag()
-    {
+        hasDestination = false;
+        isMoving = false;
         isWaiting = false;
     }
 
-    public void TakeDamage(int damageAmount)
+    //This function will generate a random destination for the enemy to move to
+    public void GenerateRandomDestination()
     {
-        //Subtract damageAmount from enemyHealth
-        enemyHealth -= damageAmount;
-        //Check to see if enemyHealth is less than or equal to 0
-        if(enemyHealth <= 0)
+        //Generate a random position within a 10 unit radius of the enemy's spawn location
+        Vector3 randomPosition = Random.insideUnitSphere * enemyRange;
+        randomPosition += spawnLocation;
+
+        //Set the target destination to the random position
+        targetDestination = randomPosition;
+        hasDestination = true;
+
+        //Tell the agent to look at the target destination
+        agent.SetDestination(targetDestination);
+        agent.updateRotation = true;
+
+        //Set the isMoving flag to true
+        isMoving = true;
+
+        Debug.Log("Enemy is moving to a random destination.");
+    }
+
+
+    //This function will be called when a player enters the enemy range collider
+    public override void OnPlayerTriggerEnter(VRCPlayerApi player)
+    {
+        Debug.Log("Player entered enemy range!");
+        hasDestination = false;
+        isMoving = false;
+
+        //If the player is not the local player, return
+        if (!player.isLocal) return;
+
+        //Set the local player to the player that entered the collider
+        localPlayer = player;
+
+        //Set owner of enemy to player
+        Networking.SetOwner(player, this.gameObject);
+    }
+
+    //This function will be called when a player stays in the collider
+    public override void OnPlayerTriggerStay(VRCPlayerApi player)
+    {
+        //If the player is not the local player, return
+        if (!player.isLocal) return;
+        
+        if(!attackingPlayer)
         {
-            //Call Die method
-            Die();
+            AttackPlayer();
+        } else
+        {
+            Debug.Log("Agent is already attacking player.");
         }
     }
 
-    private void Die()
+    //This function will be called when a player exits the collider
+    public override void OnPlayerTriggerExit(VRCPlayerApi player)
     {
-        //Destroy enemy
-        Destroy(this.gameObject);
+        //If the player is not the local player, return
+        if (!player.isLocal) return;
+        attackingPlayer = false;
+        agent.isStopped = false;
+        GenerateRandomDestination();
+    }
+
+    //This function will be called by Agent to attack player
+    public void AttackPlayer()
+    {
+        //If the player is not the local player, return
+        if (!Networking.IsOwner(this.gameObject)) return;
+
+        //Stop the agent from moving
+        agent.isStopped = true;
+
+        //Set the attackingPlayer flag to true
+        attackingPlayer = true;
+
+        //Damage the player from the PlayerHitbox script
+        playerStats.TakeDamage(10);
+
+        Debug.Log($"Player has been attacked and has {playerStats.PlayerHealth} health remaining.");
+
+        SendCustomEventDelayedSeconds("ResetAttackFlag", 1f);
+    }
+
+    //This function will be called by the agent to reset the attackingPlayer flag | Should be delayed by 1 second
+    public void ResetAttackFlag()
+    {
+        attackingPlayer = false;
+    }
+
+    public void TakeDamage(int damage)
+    {
+        //Subtract the damage from the enemy's health
+        enemyHealth -= damage;
+
+        //If the enemy's health is less than or equal to 0, destroy the enemy
+        if (enemyHealth <= 0)
+        {
+            Destroy(gameObject);
+        }
     }
 }

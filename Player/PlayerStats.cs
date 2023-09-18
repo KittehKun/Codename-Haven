@@ -7,15 +7,39 @@ using VRC.Udon;
 
 public class PlayerStats : UdonSharpBehaviour
 {
-    public int PlayerMoney{get; set;}
+    public int PlayerMoney{get; set;} = 10000; //PlayerMoney | Used for storing player's money
     public GameObject[] traderGUIs; //Assigned in Unity | Array needed for changing all shopkeeper displays on startup
+    public int PlayerHealth = 150; //Default Health Value
+    public PlayerRaidManager playerRaidManager; //PlayerRaidManager | Assigned in Unity | Used for resetting player inventory
     void Start()
     {
-        PlayerMoney = 10000; //Starting money for Player
         foreach(GameObject traderScreen in traderGUIs)
         {
             traderScreen.GetComponent<Text>().text = $"${PlayerMoney}";
         }
+    }
+
+    public void TakeDamage(int damageAmount)
+    {
+        PlayerHealth -= damageAmount;
+        Debug.Log($"Player took {damageAmount} damage! Player health is now {PlayerHealth}.");
+
+        //Update HP counter for both desktop and VR
+        PlayerHUD.UpdateHPCount(PlayerHealth);
+        PlayerVRHUD.UpdateHPCount(PlayerHealth);
+
+        //Check to see if player is dead
+        if(PlayerHealth <= 0)
+        {
+            //Kill player
+            Die();
+        }
+    }
+
+    private void Die()
+    {
+        Debug.Log("Player is dead!");
+        playerRaidManager.ResetPlayer(true);
     }
 
     //Gets PlayerMoney from Player

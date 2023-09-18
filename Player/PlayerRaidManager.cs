@@ -9,9 +9,10 @@ public class PlayerRaidManager : UdonSharpBehaviour
     private PlayerRaidInventory raidInventory; //PlayerRaidInventory taken from GameObject | Should be attached to GameObject from this script
     private PlayerStats playerStats; //PlayerStats taken from parent GameObject | Should be within the PlayerScriptsContainer GameObject
     private AudioSource[] audioSources; //Array of audio sources | Used for playing victory sound
-    private bool isInRaid = false; //Used for checking if player is in raid
+    public bool isInRaid = false; //Used for checking if player is in raid
     private Transform[] lootConatiners; //Array of loot containers | Used for resetting loot containers on extraction
     public Transform[] extractionPoints; //Array of extraction points | Assigned in Unity | Used for enabling extraction points on raid end | ARRAY IS GRABBED FROM ExtractPlayer script
+    public Transform playerSpawnPoint; //Player spawn point | Assigned in Unity | Used for teleporting player to spawn point on death
 
     void Start()
     {
@@ -58,26 +59,28 @@ public class PlayerRaidManager : UdonSharpBehaviour
         raidInventory.ResetStoragePoints();
         Debug.Log($"Reset StoragePoints to {raidInventory.StoragePoints}");
         
-        int playerHealth; //Variable used to assign player health based on if player died or extracted
         //Reset PlayerHealth back to full if player extracted successfully
         if(playerDeath)
         {
-            Debug.Log("Player died! Resetting PlayerHealth to 150.");
-            playerHealth = 100; //Player must heal back to 150 if they died in raid
+            Debug.Log("Player died! Resetting PlayerHealth to 100.");
+            playerStats.PlayerHealth = 100;
         } else
         {
             Debug.Log("Player extracted! Resetting PlayerHealth to 150.");
-            playerHealth = 150;
+            playerStats.PlayerHealth = 150;
         }
 
         //Reset HUD
         PlayerHUD.UpdateSPCount(raidInventory.StoragePoints);
-        PlayerHUD.UpdateHPCount(playerHealth);
+        PlayerHUD.UpdateHPCount(playerStats.PlayerHealth);
         PlayerVRHUD.UpdateSPCount(raidInventory.StoragePoints);
-        PlayerVRHUD.UpdateHPCount(playerHealth);
+        PlayerVRHUD.UpdateHPCount(playerStats.PlayerHealth);
 
         //Reset loot containers
         ResetLootContainers();
+
+        //Teleport Player to spawn point
+        Networking.LocalPlayer.TeleportTo(playerSpawnPoint.position, playerSpawnPoint.rotation);
     }
 
     private void PlayVictorySound()
