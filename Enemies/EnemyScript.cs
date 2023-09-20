@@ -15,6 +15,12 @@ public class EnemyScript : UdonSharpBehaviour
     public float enemyRange = 10f; //This is the range that the enemy will attempt to move to
     public int enemyHealth = 100; //This is the health of the enemy
 
+    //Damage Values
+    public int damageRangeMin; //This is the minimum damage that the enemy can deal | Assigned in Unity
+    public int damageRangeMax; //This is the maximum damage that the enemy can deal | Assigned in Unity
+    public float attackResetTime; //This is the time that the enemy will wait before attacking again | Assigned in Unity
+    public int damageChance; //This is the chance that the enemy will deal damage to the player | Assigned in Unity
+
     //Flags
     public bool isMoving = false; //This flag will be used to determine if the enemy is moving
     public bool hasDestination = false; //This flag will be used to determine if the enemy has a target destination
@@ -31,6 +37,7 @@ public class EnemyScript : UdonSharpBehaviour
     private VRCPlayerApi localPlayer; //This is the local player | Assigned by Collider trigger
 
     //Blood Particle Systems
+    public ParticleSystem muzzleFlashFX; //This is the particle system that will be used to spawn muzzle flash particles from the gun | Assigned in Unity
     public ParticleSystem headBloodSplatter; //This is the particle system that will be used to spawn blood particles | Assigned in Unity
     public ParticleSystem bodyBloodSplatter; //This is the particle system that will be used to spawn blood particles | Assigned in Unity
 
@@ -190,6 +197,9 @@ public class EnemyScript : UdonSharpBehaviour
         //Play the weapon audio source
         weaponSFX.Play();
 
+        //Play the muzzle flash particle system
+        muzzleFlashFX.Play();
+
         //Stop the agent from moving
         agent.isStopped = true;
 
@@ -200,12 +210,12 @@ public class EnemyScript : UdonSharpBehaviour
         alreadyAttacked = true;
 
         //Damage the player only with a 40% hit chance
-        if(Random.Range(0, 100) < 40)
+        if(Random.Range(0, 100) <= damageChance)
         {
             Debug.Log("Enemy has hit the player!");
 
             //Damage the player from the PlayerHitbox script
-            playerStats.TakeDamage(Random.Range(10, 16));
+            playerStats.TakeDamage(Random.Range(damageRangeMin, damageRangeMax));
 
             //Play Hit Audio Source
             PlayHitSFX().Play();
@@ -221,7 +231,7 @@ public class EnemyScript : UdonSharpBehaviour
 
         Debug.Log($"Player has been attacked and has {playerStats.PlayerHealth} health remaining.");
 
-        SendCustomEventDelayedSeconds("ResetAttackFlag", 1f);
+        SendCustomEventDelayedSeconds("ResetAttackFlag", attackResetTime);
     }
 
     //This function will be called by the agent to reset the attackingPlayer flag | Should be delayed by 1 second
