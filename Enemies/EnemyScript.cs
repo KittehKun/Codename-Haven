@@ -12,7 +12,7 @@ public class EnemyScript : UdonSharpBehaviour
     public NavMeshAgent agent; //This is the navmesh agent that will be used to move the enemy
     public Vector3 targetDestination; //This is the target destination that the enemy will move to
     public Vector3 spawnLocation; //This is the spawn location of the enemy
-    public float enemyRange = 10f; //This is the range that the enemy will attempt to move to
+    public float enemyRange = 25f; //This is the range that the enemy will attempt to move to
     public int enemyHealth = 100; //This is the health of the enemy
 
     //Damage Values
@@ -53,6 +53,10 @@ public class EnemyScript : UdonSharpBehaviour
     public AudioSource[] missSFXs; //Array of miss audio sources | Assigned in Unity
     public AudioSource weaponSFX; //Weapon audio source for enemy | Assigned in Unity
 
+    //Spawn Locations on Death
+    public Transform spawnLocationContainer; //Transform with all enemy spawn locations | Assigned in Unity
+    private Transform[] spawnLocations; //Array of spawn locations | Assigned in Start()
+
     void Start()
     {
         //Set the spawnLocation to the enemy's current position
@@ -61,6 +65,9 @@ public class EnemyScript : UdonSharpBehaviour
         //Get the spotted and death audio sources
         this.spottedSFXs = spottedSFXContainer.GetComponentsInChildren<AudioSource>();
         this.deathSFXs = deathSFXContainer.GetComponentsInChildren<AudioSource>();
+
+        //Set the spawnLocations array to the spawnLocationContainer's childCount
+        spawnLocations = spawnLocationContainer.GetComponentsInChildren<Transform>();
     }
 
     void Update()
@@ -209,7 +216,7 @@ public class EnemyScript : UdonSharpBehaviour
         //Set the alreadyAttacked flag to true
         alreadyAttacked = true;
 
-        //Damage the player only with a 40% hit chance
+        //Damage the player based on the damageChance percentage
         if(Random.Range(0, 100) <= damageChance)
         {
             Debug.Log("Enemy has hit the player!");
@@ -246,7 +253,7 @@ public class EnemyScript : UdonSharpBehaviour
         enemyHealth -= damage;
 
         //If the enemy's health is less than or equal to 0, destroy the enemy
-        if (enemyHealth <= 0)
+        if (enemyHealth <= 0 && !isDead)
         {
             isDead = true; //Set the isDead flag to true
             attackingPlayer = false; //Set the attackingPlayer flag to false
@@ -261,7 +268,7 @@ public class EnemyScript : UdonSharpBehaviour
 
             //Disable the attack collider to prevent the enemy from attacking while dead
             attackCollider.enabled = false;
-            this.GetComponent<CapsuleCollider>().enabled = false;
+            //this.GetComponent<CapsuleCollider>().enabled = false;
 
             switch(Random.Range(0, 3)) //Chooses between 0 and 2 | Currently have 3 death animations
             {
@@ -294,7 +301,59 @@ public class EnemyScript : UdonSharpBehaviour
                     GetDeathSFX().Play();
                     break;
             }
+
+            //Respawn the enemy after 30 seconds using the RespawnEnemy() function
+            SendCustomEventDelayedSeconds("CallNetworkRespawnEnemy", 3f);
         }
+    }
+
+    //This function will be used to send a network event to respawn the enemy
+    public void CallNetworkRespawnEnemy()
+    {
+        //Reset the attack colliders - LOCAL
+        attackCollider.enabled = true;
+        //this.GetComponent<CapsuleCollider>().enabled = true;
+
+        //Reset agent flags - LOCAL
+        hasDestination = false;
+        isMoving = false;
+        isWaiting = false;
+        waitStarted = false;
+        alreadyAttacked = false;
+        attackingPlayer = false;
+        isDead = false;
+
+        SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "RespawnEnemy");
+    }
+
+    //This function will be used to respawn the enemy
+    public void RespawnEnemy()
+    {
+        //Reset enemy health
+        enemyHealth = 100;
+
+        //Reset the enemy's position to a random spawn location
+        this.transform.position = spawnLocations[Random.Range(0, spawnLocations.Length)].position;
+
+        //Reset the enemy's rotation
+        this.transform.rotation = spawnLocations[Random.Range(0, spawnLocations.Length)].rotation;
+
+        //Reset the agent's destination to the enemy's current position
+        agent.SetDestination(this.transform.position);
+
+        //Enable the agent
+        agent.isStopped = false;
+
+        //Play the enemy idle animation
+        enemyAnimator.Play("Idle");
+
+        //Set the agent destination to the enemy's current position
+        agent.SetDestination(this.transform.position);
+
+        //Set the spawnLocation to the enemy's current position
+        spawnLocation = this.transform.position;
+
+        Debug.Log("Enemy has respawned.");
     }
 
     //This function will be called by the agent to play the spotted audio source

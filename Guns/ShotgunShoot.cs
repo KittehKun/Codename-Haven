@@ -186,35 +186,35 @@ public class ShotgunShoot : UdonSharpBehaviour
         Vector3 direction5 = Vector3.left + Vector3.left;
 
         //Check all Raycasts for hits
-        if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out RaycastHit HitData, Range, LayerMask.GetMask("Enemy"))) //Check to see if Ray hit any colliders
+        if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out RaycastHit HitData, Range, LayerMask.GetMask("Enemy"), QueryTriggerInteraction.Ignore)) //Check to see if Ray hit any colliders
         {
             //With layer mask defined, we can now check to see if the Ray hit an enemy
             //Call TakeDamage method on enemy
             HitData.transform.gameObject.GetComponent<EnemyScript>().TakeDamage(Damage);
         }
 
-        if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction2 * Range), out RaycastHit HitData2, Range, LayerMask.GetMask("Enemy"))) //Check to see if Ray hit any colliders
+        if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction2 * Range), out RaycastHit HitData2, Range, LayerMask.GetMask("Enemy"), QueryTriggerInteraction.Ignore)) //Check to see if Ray hit any colliders
         {
             //With layer mask defined, we can now check to see if the Ray hit an enemy
             //Call TakeDamage method on enemy
             HitData2.transform.gameObject.GetComponent<EnemyScript>().TakeDamage(Damage);
         }
 
-        if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction3 * Range), out RaycastHit HitData3, Range, LayerMask.GetMask("Enemy"))) //Check to see if Ray hit any colliders
+        if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction3 * Range), out RaycastHit HitData3, Range, LayerMask.GetMask("Enemy"), QueryTriggerInteraction.Ignore)) //Check to see if Ray hit any colliders
         {
             //With layer mask defined, we can now check to see if the Ray hit an enemy
             //Call TakeDamage method on enemy
             HitData3.transform.gameObject.GetComponent<EnemyScript>().TakeDamage(Damage);
         }
 
-        if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction4 * Range), out RaycastHit HitData4, Range, LayerMask.GetMask("Enemy"))) //Check to see if Ray hit any colliders
+        if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction4 * Range), out RaycastHit HitData4, Range, LayerMask.GetMask("Enemy"), QueryTriggerInteraction.Ignore)) //Check to see if Ray hit any colliders
         {
             //With layer mask defined, we can now check to see if the Ray hit an enemy
             //Call TakeDamage method on enemy
             HitData4.transform.gameObject.GetComponent<EnemyScript>().TakeDamage(Damage);
         }
 
-        if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction5 * Range), out RaycastHit HitData5, Range, LayerMask.GetMask("Enemy"))) //Check to see if Ray hit any colliders
+        if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction5 * Range), out RaycastHit HitData5, Range, LayerMask.GetMask("Enemy"), QueryTriggerInteraction.Ignore)) //Check to see if Ray hit any colliders
         {
             //With layer mask defined, we can now check to see if the Ray hit an enemy
             //Call TakeDamage method on enemy
