@@ -28,8 +28,15 @@ public class SniperShoot : UdonSharpBehaviour
     //Particle System
     public ParticleSystem muzzleFlashFX; //Assigned in Unity | Used for playing the muzzle flash animation
 
+    //LayerMask Integer
+    private int layerNumber = 31; //Used for raycast | 32nd layer is the Enemy layer
+    private int layerMask; //Used for raycast | Defined in Start() method
+
     void Start()
     {
+        //Define layerMask
+        layerMask = 1 << layerNumber; //Bitwise left shift operator to represent layer number by single bit | 31st layer is the Enemy layer
+
         //Find the barrel of the gun
         barrel = this.transform.Find("BarrelStart");
 
@@ -162,7 +169,7 @@ public class SniperShoot : UdonSharpBehaviour
         //Define RaycastHit for finding data on what the Ray hit | Used in "out" statement of Physics.Raycast method
         //Cast out Ray and output GameObject that the Ray hit
         //Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out HitData, Range) | This line of code returns true or false if the Ray hits something
-        if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out RaycastHit HitData, Range, LayerMask.GetMask("Enemy"), QueryTriggerInteraction.Ignore)) //Check to see if Ray hit any colliders
+        if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out RaycastHit HitData, Range, layerMask, QueryTriggerInteraction.Ignore)) //Check to see if Ray hit any colliders
         {
             //With layer mask defined, we can now check to see if the Ray hit an enemy
             //Call TakeDamage method on enemy

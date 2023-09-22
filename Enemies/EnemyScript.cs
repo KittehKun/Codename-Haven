@@ -59,6 +59,9 @@ public class EnemyScript : UdonSharpBehaviour
 
     void Start()
     {
+        //Set the agent variable
+        agent = GetComponent<NavMeshAgent>(); //Just in case it's not set in Unity or it builds incorrectly
+        
         //Set the spawnLocation to the enemy's current position
         spawnLocation = this.transform.position;
 
@@ -69,11 +72,15 @@ public class EnemyScript : UdonSharpBehaviour
         //Set the spawnLocations array to the spawnLocationContainer's childCount
         spawnLocations = spawnLocationContainer.GetComponentsInChildren<Transform>();
 
-        //Set the agent variable
-        agent = this.GetComponent<NavMeshAgent>(); //Just in case it's not set in Unity or it builds incorrectly
-
         //LEFT OFF HERE - VRCHAT DOES NOT UPLOAD NAVMESH AGENTS SET IN UNITY HENCE WHY THEY WORK IN EDITOR BUT NOT IN VRCHAT
         //CURRENTLY SETTING AGENT TO A PRIVATE VARIABLE INSTEAD OF ASSIGNING IT IN UNITY - NEED TO TEST IN VRCHAT IF SET IN START METHOD
+
+        //DEBUG CODE BELOW
+        if(!agent.isOnNavMesh)
+        {
+            //Disable the GameObject
+            this.gameObject.SetActive(false);
+        }
     }
 
     void Update()
