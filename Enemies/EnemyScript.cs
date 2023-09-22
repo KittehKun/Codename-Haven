@@ -9,11 +9,11 @@ using VRC.Udon;
 public class EnemyScript : UdonSharpBehaviour
 {
     public Collider attackCollider; //This collider will be used to detect players using the OnPlayerTriggerEnter() event from the VRC Api | Assigned in Unity
-    public NavMeshAgent agent; //This is the navmesh agent that will be used to move the enemy
-    public Vector3 targetDestination; //This is the target destination that the enemy will move to
+    private NavMeshAgent agent; //This is the navmesh agent that will be used to move the enemy
+    [UdonSynced] public Vector3 targetDestination; //This is the target destination that the enemy will move to
     public Vector3 spawnLocation; //This is the spawn location of the enemy
     public float enemyRange = 25f; //This is the range that the enemy will attempt to move to
-    public int enemyHealth = 100; //This is the health of the enemy
+    [UdonSynced] public int enemyHealth = 100; //This is the health of the enemy
 
     //Damage Values
     public int damageRangeMin; //This is the minimum damage that the enemy can deal | Assigned in Unity
@@ -68,6 +68,12 @@ public class EnemyScript : UdonSharpBehaviour
 
         //Set the spawnLocations array to the spawnLocationContainer's childCount
         spawnLocations = spawnLocationContainer.GetComponentsInChildren<Transform>();
+
+        //Set the agent variable
+        agent = this.GetComponent<NavMeshAgent>(); //Just in case it's not set in Unity or it builds incorrectly
+
+        //LEFT OFF HERE - VRCHAT DOES NOT UPLOAD NAVMESH AGENTS SET IN UNITY HENCE WHY THEY WORK IN EDITOR BUT NOT IN VRCHAT
+        //CURRENTLY SETTING AGENT TO A PRIVATE VARIABLE INSTEAD OF ASSIGNING IT IN UNITY - NEED TO TEST IN VRCHAT IF SET IN START METHOD
     }
 
     void Update()
@@ -135,7 +141,6 @@ public class EnemyScript : UdonSharpBehaviour
 
         //Tell the agent to look at the target destination
         agent.SetDestination(targetDestination);
-        agent.updateRotation = true;
 
         //Set the isMoving flag to true
         isMoving = true;
