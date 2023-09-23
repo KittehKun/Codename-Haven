@@ -6,6 +6,7 @@ using VRC.Udon;
 
 public class PlayerInventory : UdonSharpBehaviour
 {   
+    //Player Inventory
     public int[] PlayerOwnedPistols {get; set;}
     private readonly int pistolCount = 7; //Counts base pistols without attachments in game
     //Current Pistols in order for array based on index
@@ -30,6 +31,9 @@ public class PlayerInventory : UdonSharpBehaviour
     private readonly int sniperCount = 6;
     //Current Snipers in order for array
     // HuntingRifle | Winchester | SVD | AWP | RSASS | 50Cal
+
+    //Safe Keys Count
+    public int SafeKeys {get; private set;} = 1; //Default 0 | Used for opening safes | Dropped from Extraordinary Loot or Bosses
 
     void Start()
     {
@@ -60,6 +64,18 @@ public class PlayerInventory : UdonSharpBehaviour
         //Default Special Weapons
 
         //Default Melee Weapons - Knife will always be available as a free weapon
+    }
+
+    //Add Safe Key | Called from LootItem script
+    public void AddSafeKey()
+    {
+        SafeKeys++;
+    }
+
+    //Remove Safe Key | Called from LootItem script
+    public void RemoveSafeKey()
+    {
+        SafeKeys--;
     }
 
 }

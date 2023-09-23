@@ -9,14 +9,16 @@ public class PlayerStats : UdonSharpBehaviour
 {
     public int PlayerMoney{get; set;} = 10000; //PlayerMoney | Used for storing player's money
     public GameObject[] traderGUIs; //Assigned in Unity | Array needed for changing all shopkeeper displays on startup
-    public int PlayerHealth = 150; //Default Health Value
+    public int PlayerHealth; //Default Health Value
+    public int MaximumHealth {get; private set;} = 125; //Default Max Health Value
     public PlayerRaidManager playerRaidManager; //PlayerRaidManager | Assigned in Unity | Used for resetting player inventory
     void Start()
     {
-        foreach(GameObject traderScreen in traderGUIs)
-        {
-            traderScreen.GetComponent<Text>().text = $"${PlayerMoney}";
-        }
+        UpdateMenuMoneyGUI();
+
+        PlayerHealth = MaximumHealth;
+        PlayerHUD.UpdateHPCount(PlayerHealth, MaximumHealth);
+        PlayerVRHUD.UpdateHPCount(PlayerHealth, MaximumHealth);
     }
 
     public void TakeDamage(int damageAmount)
@@ -25,8 +27,8 @@ public class PlayerStats : UdonSharpBehaviour
         Debug.Log($"Player took {damageAmount} damage! Player health is now {PlayerHealth}.");
 
         //Update HP counter for both desktop and VR
-        PlayerHUD.UpdateHPCount(PlayerHealth);
-        PlayerVRHUD.UpdateHPCount(PlayerHealth);
+        PlayerHUD.UpdateHPCount(PlayerHealth, MaximumHealth);
+        PlayerVRHUD.UpdateHPCount(PlayerHealth, MaximumHealth);
 
         //Check to see if player is dead
         if(PlayerHealth <= 0)
@@ -65,4 +67,11 @@ public class PlayerStats : UdonSharpBehaviour
             traderScreen.GetComponent<Text>().text = $"${PlayerMoney}";
         }
     }
+
+    //This method will set the maximum health to a new value
+    public void SetMaximumHealth(int newMaxHealth)
+    {
+        MaximumHealth = newMaxHealth;
+    }
+
 }

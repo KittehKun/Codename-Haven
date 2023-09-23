@@ -36,9 +36,9 @@ public class PlayerHUD : UdonSharpBehaviour
         GameObject.Find("SP Counter").transform.GetComponent<TextMeshProUGUI>().text = $"SP: {newStoragePointCount}/20";
     }
 
-    public static void UpdateHPCount(int newHPCount)
+    public static void UpdateHPCount(int newHPCount, int newMaxHPCount)
     {
         //Get the "HP Counter" GameObject and update the Text with the new HealthPoint count
-        GameObject.Find("HP Counter").transform.GetComponent<TextMeshProUGUI>().text = $"HP: {newHPCount}/150";
+        GameObject.Find("HP Counter").transform.GetComponent<TextMeshProUGUI>().text = $"HP: {newHPCount}/{newMaxHPCount}";
     }
 }

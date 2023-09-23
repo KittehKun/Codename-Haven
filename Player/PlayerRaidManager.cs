@@ -62,22 +62,26 @@ public class PlayerRaidManager : UdonSharpBehaviour
         //Reset PlayerHealth back to full if player extracted successfully
         if(playerDeath)
         {
-            Debug.Log("Player died! Resetting PlayerHealth to 100.");
-            playerStats.PlayerHealth = 100;
+            Debug.Log("Player died! Resetting PlayerHealth to 125 & MaximumHealth back to default.");
+            playerStats.PlayerHealth = 125;
+            playerStats.SetMaximumHealth(125);
         } else
         {
-            Debug.Log("Player extracted! Resetting PlayerHealth to 150.");
-            playerStats.PlayerHealth = 150;
+            Debug.Log("Player extracted! Resetting PlayerHealth to MaximumHealth.");
+            playerStats.PlayerHealth = playerStats.MaximumHealth;
         }
 
         //Reset HUD
         PlayerHUD.UpdateSPCount(raidInventory.StoragePoints);
-        PlayerHUD.UpdateHPCount(playerStats.PlayerHealth);
+        PlayerHUD.UpdateHPCount(playerStats.PlayerHealth, playerStats.MaximumHealth);
         PlayerVRHUD.UpdateSPCount(raidInventory.StoragePoints);
-        PlayerVRHUD.UpdateHPCount(playerStats.PlayerHealth);
+        PlayerVRHUD.UpdateHPCount(playerStats.PlayerHealth, playerStats.MaximumHealth);
 
         //Reset loot containers
         ResetLootContainers();
+
+        //Reset opened safes
+        ResetOpenSafes();
 
         //Teleport Player to spawn point
         Networking.LocalPlayer.TeleportTo(playerSpawnPoint.position, playerSpawnPoint.rotation);
@@ -106,6 +110,28 @@ public class PlayerRaidManager : UdonSharpBehaviour
                 //Play "CloseContainer" animation state
                 this.lootConatiners[i].GetComponent<Animator>().Play("CloseContainer");
             }
+
+            //Remove all objects from the _SPAWNEDLOOT GameObject
+            for (int j = 0; j < GameObject.Find("_SPAWNEDLOOT").transform.childCount; j++)
+            {
+                //Destroy all objects in the _SPAWNEDLOOT GameObject
+                Destroy(GameObject.Find("_SPAWNEDLOOT").transform.GetChild(j).gameObject);
+            }
+        }
+    }
+
+    private void ResetOpenSafes()
+    {
+        //Get all safes
+        for (int i = 0; i < GameObject.Find("_SAFES").transform.childCount; i++)
+        {
+            //Get the UdonBehavior script of each object and set the collider to true and the isLooted bool to false
+            GameObject.Find("_SAFES").transform.GetChild(i).GetComponent<UdonBehaviour>().SetProgramVariable("isLooted", false);
+            //Set collider to true
+            GameObject.Find("_SAFES").transform.GetChild(i).GetComponent<Collider>().enabled = true;
+
+            //Play "CloseSafe" animation state
+            GameObject.Find("_SAFES").transform.GetChild(i).GetComponent<Animator>().Play("CloseSafe");
 
             //Remove all objects from the _SPAWNEDLOOT GameObject
             for (int j = 0; j < GameObject.Find("_SPAWNEDLOOT").transform.childCount; j++)

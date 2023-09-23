@@ -11,18 +11,25 @@ public class PurchaseMP5 : UdonSharpBehaviour
     public PlayerInventory playerInventory; //Assigned Unity
     public GameObject wendigoMoneyCounter; //Assigned in Unity
     public int MP5Price; //Assigned in Unity
+    private AudioSource buySFX; //Assigned in Start()
     void Start()
     {
-        
+        this.buySFX = GameObject.Find("PlayerBuyItemAudio").GetComponent<AudioSource>();
     }
 
     public override void Interact()
     {
        if(playerMoney.PlayerMoney >= MP5Price && playerInventory.PlayerOwnedSMGs[1] < 5)
        {
+        //Remove money from player and add one to the pistol counter
         playerMoney.PlayerMoney -= MP5Price;
         playerInventory.PlayerOwnedSMGs[1]++; //Add one to pistol counter
+
+        //Update the money counter and play the buy sound
         wendigoMoneyCounter.GetComponent<Text>().text = $"${playerMoney.PlayerMoney}";
+
+        //Play Buy SFX
+        buySFX.Play();
        }
        else
        {

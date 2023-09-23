@@ -11,9 +11,10 @@ public class PurchaseUZI : UdonSharpBehaviour
     public PlayerInventory playerInventory; //Assigned Unity
     public GameObject wendigoMoneyCounter; //Assigned in Unity
     public int UziPrice; //Assigned in Unity
+    private AudioSource buySFX; //Assigned in Start()
     void Start()
     {
-        
+        this.buySFX = GameObject.Find("PlayerBuyItemAudio").GetComponent<AudioSource>();
     }
 
     public override void Interact()
@@ -23,6 +24,7 @@ public class PurchaseUZI : UdonSharpBehaviour
         playerMoney.PlayerMoney -= UziPrice;
         playerInventory.PlayerOwnedSMGs[0]++; //Add one to pistol counter
         wendigoMoneyCounter.GetComponent<Text>().text = $"${playerMoney.PlayerMoney}";
+        buySFX.Play();
        }
        else
        {

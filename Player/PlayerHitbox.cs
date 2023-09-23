@@ -16,6 +16,8 @@ public class PlayerHitbox : UdonSharpBehaviour
         player = Networking.LocalPlayer;
         //Scale sphere to a 1/3 of its size
         hitbox.transform.localScale = new Vector3(0.33f, 0.33f, 0.33f);
+        //Disable MeshRenderer
+        hitbox.GetComponent<MeshRenderer>().enabled = false;
     }
 
     void Update()

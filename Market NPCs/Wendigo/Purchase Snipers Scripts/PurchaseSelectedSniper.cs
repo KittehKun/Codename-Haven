@@ -14,9 +14,12 @@ public class PurchaseSelectedSniper : UdonSharpBehaviour
     public int SelectedSniper; //Assigned in Unity | Value will be used to select index from array
     private int[] SniperPrices; // HuntingRifle | Winchester | SVD | AWP | RSASS | 50Cal
 
+    private AudioSource buySFX; //Assigned in Start()
+
     void Start()
     {
         SniperPrices = new int[] {500 , 600, 700, 4750, 5000, 7500};
+        this.buySFX = GameObject.Find("PlayerBuyItemAudio").GetComponent<AudioSource>();
     }
 
     public override void Interact()
@@ -26,6 +29,7 @@ public class PurchaseSelectedSniper : UdonSharpBehaviour
         playerMoney.PlayerMoney -= SniperPrices[SelectedSniper];
         playerInventory.PlayerOwnedSnipers[SelectedSniper]++; //Add one to pistol counter
         wendigoMoneyCounter.GetComponent<Text>().text = $"${playerMoney.PlayerMoney}";
+        buySFX.Play();
        }
        else
        {

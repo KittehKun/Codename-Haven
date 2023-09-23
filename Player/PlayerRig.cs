@@ -64,24 +64,15 @@ public class PlayerRig : UdonSharpBehaviour
             equippedWeapon.transform.rotation = Quaternion.Euler(0, spawnArea.transform.rotation.eulerAngles.y, 0);
         }
     }
-
-    //Method to reload the gun
-    public void OnCollisionEnter(Collision other)
-    {
-        //Reload the gun if the gun collider collides with the PlayerRig collider
-        if(other.gameObject == equippedWeapon)
-        {
-            Debug.Log("Reloading gun.");
-            equippedWeapon.GetComponent<UdonBehaviour>().SendCustomEvent("Reload");
-        }
-    }
-
+    
+    //Set the objectPool for the player's rig
     public void SetObjectPool(VRCObjectPool pool)
     {
         //Set the objectPool to the pool passed in
         objectPool = pool;
     }
 
+    //Check if the player has a weapon equipped
     public bool WeaponAlreadyEquipped()
     {
         if(equippedWeapon != null)
@@ -93,6 +84,7 @@ public class PlayerRig : UdonSharpBehaviour
         }
     }
 
+    //Return the equipped weapon to the objectPool
     public void ReturnWeaponToPool()
     {        
         //Disable the weapon's collider
@@ -107,6 +99,7 @@ public class PlayerRig : UdonSharpBehaviour
         equippedWeapon = null;
     }
 
+    //Spawn the weapon from the objectPool if none is equipped | If one is, return that weapon to the objectPool and spawn a new one
     public void SpawnWeapon()
     {
         if(WeaponAlreadyEquipped())
