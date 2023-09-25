@@ -17,7 +17,6 @@ public class PlayerStats : UdonSharpBehaviour
         UpdateMenuMoneyGUI();
 
         PlayerHealth = MaximumHealth;
-        PlayerHUD.UpdateHPCount(PlayerHealth, MaximumHealth);
         PlayerVRHUD.UpdateHPCount(PlayerHealth, MaximumHealth);
         PlayerVRHUD.UpdateMoneyCounter(PlayerMoney);
     }
@@ -28,7 +27,6 @@ public class PlayerStats : UdonSharpBehaviour
         Debug.Log($"Player took {damageAmount} damage! Player health is now {PlayerHealth}.");
 
         //Update HP counter for both desktop and VR
-        PlayerHUD.UpdateHPCount(PlayerHealth, MaximumHealth);
         PlayerVRHUD.UpdateHPCount(PlayerHealth, MaximumHealth);
 
         //Check to see if player is dead

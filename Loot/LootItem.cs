@@ -23,7 +23,6 @@ public class LootItem : UdonSharpBehaviour
             playerRaidInventory.AddToRaidWallet(ItemPrice);
             Debug.Log($"$Player picked up item successfully. They now have {playerRaidInventory.StoragePoints}.");
             Debug.Log("Removing item.");
-            PlayerHUD.UpdateSPCount(playerRaidInventory.StoragePoints);
             PlayerVRHUD.UpdateSPCount(playerRaidInventory.StoragePoints);
             Destroy(this.transform.gameObject);
         }
