@@ -1,5 +1,6 @@
 ﻿using UdonSharp;
 using UnityEngine;
+using VRC.SDKBase;
 using VRC.Udon;
 
 public class SMGShoot : UdonSharpBehaviour
@@ -69,7 +70,7 @@ public class SMGShoot : UdonSharpBehaviour
         Debug.DrawRay(barrel.position, barrel.TransformDirection(direction * Range));
 
         //Check to see if player is pressing R to reload
-        if (Input.GetKeyDown(KeyCode.R) && currentAmmo < maxAmmo && !isReloading)
+        if (Input.GetKeyDown(KeyCode.E) && currentAmmo < maxAmmo && !isReloading)
         {
             Debug.Log("Player is reloading.");
             Reload();
@@ -126,12 +127,12 @@ public class SMGShoot : UdonSharpBehaviour
         {
             Debug.Log("Player fired weapon.");
             fullAuto = true;
-            SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "Shoot");
+            Shoot();
         }
         else if (currentAmmo == 0 && !isReloading)
         {
             Debug.Log("Player is out of ammo.");
-            SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "PlayEmptySound");
+            PlayEmptySound();
         }
         else
         {
@@ -173,6 +174,11 @@ public class SMGShoot : UdonSharpBehaviour
         //Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out HitData, Range) | This line of code returns true or false if the Ray hits something
         if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out RaycastHit HitData, Range, layerMask, QueryTriggerInteraction.Ignore)) //Check to see if Ray hit any colliders
         {
+            GameObject enemy = HitData.transform.gameObject; //Define enemy as the GameObject that the Ray hit
+
+            //Set owner of the gameobject that the Ray hit to the player that shot the gun
+            Networking.SetOwner(Networking.LocalPlayer, enemy);
+            
             //With layer mask defined, we can now check to see if the Ray hit an enemy
             //Call TakeDamage method on enemy
             HitData.transform.gameObject.GetComponent<EnemyScript>().TakeDamage(Damage);

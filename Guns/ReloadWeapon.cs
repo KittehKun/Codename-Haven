@@ -19,6 +19,13 @@ public class ReloadWeapon : UdonSharpBehaviour
         {
             equippedWeapon = this.transform.parent.gameObject;
         }
+
+        //Enable the collider clientside if the user is in VR | Desktop players have the E or R key to reload
+        if(Networking.LocalPlayer.IsUserInVR())
+        {
+            this.GetComponent<Collider>().enabled = true;
+        }
+        
     }
 
     public override void Interact()

@@ -1,5 +1,6 @@
 ﻿using UdonSharp;
 using UnityEngine;
+using VRC.SDKBase;
 using VRC.Udon;
 
 public class ARShoot : UdonSharpBehaviour
@@ -68,7 +69,7 @@ public class ARShoot : UdonSharpBehaviour
         Debug.DrawRay(barrel.position, barrel.TransformDirection(direction * Range));
 
         //Check to see if player is pressing R to reload
-        if (Input.GetKeyDown(KeyCode.R) && currentAmmo < MaxAmmo && !isReloading)
+        if (Input.GetKeyDown(KeyCode.E) && currentAmmo < MaxAmmo && !isReloading)
         {
             Debug.Log("Player is reloading.");
             Reload();
@@ -109,6 +110,12 @@ public class ARShoot : UdonSharpBehaviour
     {
         //Set the isHeld flag to true
         isHeld = true;
+
+        //Enable the GameObject
+        if(!Networking.LocalPlayer.IsOwner(this.gameObject))
+        {
+            this.gameObject.SetActive(true);
+        }
     }
 
     public override void OnDrop()
@@ -117,6 +124,12 @@ public class ARShoot : UdonSharpBehaviour
         isHeld = false;
 
         //The weapon goes back into the player's rig | This is handled in the PlayerRig.cs script
+
+        //Disable the GameObject if the player isn't the local player
+        if (!Networking.LocalPlayer.IsOwner(this.gameObject))
+        {
+            this.gameObject.SetActive(false);
+        }
     }
 
     //Function to fire weapon
@@ -126,12 +139,12 @@ public class ARShoot : UdonSharpBehaviour
         {
             Debug.Log("Player fired weapon.");
             fullAuto = true;
-            SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "Shoot");
+            Shoot();
         }
         else if (currentAmmo == 0 && !isReloading)
         {
             Debug.Log("Player is out of ammo.");
-            SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "PlayEmptySound");
+            PlayEmptySound();
         }
         else
         {
@@ -157,10 +170,10 @@ public class ARShoot : UdonSharpBehaviour
         arAnimator.Play("Shoot");
         
         //Play gunshot sound
-        SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "PlayGunShot");
+        PlayGunShot();
 
         //Play muzzle effect FX
-        SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "PlayMuzzleFX");
+        PlayMuzzleFX();
 
         //Subtract 1 from currentAmmo
         currentAmmo -= 1;
@@ -173,9 +186,14 @@ public class ARShoot : UdonSharpBehaviour
         //Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out HitData, Range) | This line of code returns true or false if the Ray hits something
         if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out RaycastHit HitData, Range, layerMask, QueryTriggerInteraction.Ignore)) //Check to see if Ray hit any colliders
         {
+            GameObject enemy = HitData.transform.gameObject; //Get the GameObject that the Ray hit
+            
+            //Set owner of the gameobject that the Ray hit to the player that shot the gun
+            Networking.SetOwner(Networking.LocalPlayer, enemy);
+            
             //With layer mask defined, we can now check to see if the Ray hit an enemy
             //Call TakeDamage method on enemy
-            HitData.transform.gameObject.GetComponent<EnemyScript>().TakeDamage(Damage);
+            enemy.GetComponent<EnemyScript>().TakeDamage(Damage);
         }
 
         if (fullAuto && currentAmmo > 0) //Check to see if gun is full auto and if player has ammo

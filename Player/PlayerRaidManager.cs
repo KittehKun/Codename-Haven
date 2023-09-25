@@ -8,7 +8,8 @@ public class PlayerRaidManager : UdonSharpBehaviour
 {
     private PlayerRaidInventory raidInventory; //PlayerRaidInventory taken from GameObject | Should be attached to GameObject from this script
     private PlayerStats playerStats; //PlayerStats taken from parent GameObject | Should be within the PlayerScriptsContainer GameObject
-    private AudioSource[] audioSources; //Array of audio sources | Used for playing victory sound
+    public AudioSource[] audioSources; //Array of audio sources | Used for playing victory sound | Assigned in Unity
+    public AudioSource[] bigAudioSources; //Array of audio sources | Used for playing big victory sound | Assigned in Unity due to audio being special
     public bool isInRaid = false; //Used for checking if player is in raid
     private Transform[] lootConatiners; //Array of loot containers | Used for resetting loot containers on extraction
     public Transform[] extractionPoints; //Array of extraction points | Assigned in Unity | Used for enabling extraction points on raid end | ARRAY IS GRABBED FROM ExtractPlayer script
@@ -20,8 +21,6 @@ public class PlayerRaidManager : UdonSharpBehaviour
         raidInventory = this.GetComponent<PlayerRaidInventory>();
         //Get PlayerStats from parent GameObject
         playerStats = this.transform.parent.Find("PlayerStats").GetComponent<PlayerStats>();
-        //Get audio sources from children GameObjects
-        audioSources = this.GetComponentsInChildren<AudioSource>();
         //Initialize loot containers array based on childCount
         lootConatiners = new Transform[GameObject.Find("_LOOTCONTAINERS").transform.childCount]; //Expected: New array with length of childCount
         //Fill loot containers array with all loot containers
@@ -37,13 +36,24 @@ public class PlayerRaidManager : UdonSharpBehaviour
         //Add RaidWallet to player's money
         Debug.Log($"Player extracted! Adding {raidInventory.GetCurrentRaidWallet()} to player's money.");
         playerStats.AddMoney(raidInventory.GetCurrentRaidWallet());
-        //Reset RaidWallet
-        ResetPlayer(false);
-
+        
         //Update Menu GUI with new money value | Includes shopkeepers and Main Menu
         playerStats.UpdateMenuMoneyGUI();
+        PlayerVRHUD.UpdateMoneyCounter(playerStats.PlayerMoney);
 
-        PlayVictorySound();
+        //Check if the player extracted with more than 500 dollars
+        if(raidInventory.GetCurrentRaidWallet() >= 500)
+        {
+            //Play big victory sound
+            PlayBigVictorySound();
+        } else
+        {
+            //Play victory sound
+            PlayVictorySound();
+        }
+        
+        //Reset RaidWallet
+        ResetPlayer(false);
     }
 
     /// <summary>
@@ -63,7 +73,7 @@ public class PlayerRaidManager : UdonSharpBehaviour
         if(playerDeath)
         {
             Debug.Log("Player died! Resetting PlayerHealth to 125 & MaximumHealth back to default.");
-            playerStats.PlayerHealth = 125;
+            playerStats.PlayerHealth = 100;
             playerStats.SetMaximumHealth(125);
         } else
         {
@@ -72,10 +82,10 @@ public class PlayerRaidManager : UdonSharpBehaviour
         }
 
         //Reset HUD
-        PlayerHUD.UpdateSPCount(raidInventory.StoragePoints);
-        PlayerHUD.UpdateHPCount(playerStats.PlayerHealth, playerStats.MaximumHealth);
         PlayerVRHUD.UpdateSPCount(raidInventory.StoragePoints);
         PlayerVRHUD.UpdateHPCount(playerStats.PlayerHealth, playerStats.MaximumHealth);
+        
+        PlayerVRHUD.UpdateMoneyCounter(playerStats.PlayerMoney);
 
         //Reset loot containers
         ResetLootContainers();
@@ -92,6 +102,13 @@ public class PlayerRaidManager : UdonSharpBehaviour
         //Play victory sound
         Debug.Log("Playing victory sound.");
         audioSources[Random.Range(0, audioSources.Length)].Play();
+    }
+
+    private void PlayBigVictorySound()
+    {
+        //Play big victory sound
+        Debug.Log("Playing big victory sound.");
+        bigAudioSources[Random.Range(0, bigAudioSources.Length)].Play();
     }
 
     private void ResetLootContainers()

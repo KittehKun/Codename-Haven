@@ -9,7 +9,6 @@ public class PurchaseSelectedAR : UdonSharpBehaviour
 {
     public PlayerStats playerMoney; //Assigned in Unity
     public PlayerInventory playerInventory; //Assigned Unity
-    public GameObject wendigoMoneyCounter; //Assigned in Unity
     
     public int SelectedAR; //Assigned in Unity | Value will be used to select index from array
     private int[] ARPrices; // M4 | AK | G36 | LVOA | AUG | M16
@@ -34,7 +33,7 @@ public class PurchaseSelectedAR : UdonSharpBehaviour
         buySFX.Play();
 
         //Update the money counter
-        wendigoMoneyCounter.GetComponent<Text>().text = $"${playerMoney.PlayerMoney}";
+        PlayerVRHUD.UpdateMoneyCounter(playerMoney.PlayerMoney);
        }
        else
        {

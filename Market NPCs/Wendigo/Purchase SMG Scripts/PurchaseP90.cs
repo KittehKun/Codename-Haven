@@ -9,7 +9,6 @@ public class PurchaseP90 : UdonSharpBehaviour
 {
     public PlayerStats playerMoney; //Assigned in Unity
     public PlayerInventory playerInventory; //Assigned Unity
-    public GameObject wendigoMoneyCounter; //Assigned in Unity
     public int P90Price; //Assigned in Unity
     private AudioSource buySFX; //Assigned in Start()
     void Start()
@@ -23,7 +22,7 @@ public class PurchaseP90 : UdonSharpBehaviour
        {
         playerMoney.PlayerMoney -= P90Price;
         playerInventory.PlayerOwnedSMGs[3]++; //Add one to pistol counter
-        wendigoMoneyCounter.GetComponent<Text>().text = $"${playerMoney.PlayerMoney}";
+        PlayerVRHUD.UpdateMoneyCounter(playerMoney.PlayerMoney);
         buySFX.Play();
        }
        else

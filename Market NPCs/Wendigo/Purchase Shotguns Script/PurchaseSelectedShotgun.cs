@@ -8,9 +8,7 @@ using VRC.Udon;
 public class PurchaseSelectedShotgun : UdonSharpBehaviour
 {
     public PlayerStats playerMoney; //Assigned in Unity
-    public PlayerInventory playerInventory; //Assigned Unity
-    public GameObject wendigoMoneyCounter; //Assigned in Unity
-    
+    public PlayerInventory playerInventory; //Assigned Unity    
     public int SelectedShotgun; //Assigned in Unity | Value will be used to select index from array
     private int[] ShotgunPrices; // M590A1 | Double Barrel | M1014 | SPAS 12 | AA12
 
@@ -31,7 +29,7 @@ public class PurchaseSelectedShotgun : UdonSharpBehaviour
         playerInventory.PlayerOwnedShotguns[SelectedShotgun]++; //Add one to shotgun counter
 
         //Update the money counter
-        wendigoMoneyCounter.GetComponent<Text>().text = $"${playerMoney.PlayerMoney}";
+        PlayerVRHUD.UpdateMoneyCounter(playerMoney.PlayerMoney);
 
         //Play the buy sound
         buySFX.Play();

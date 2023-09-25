@@ -19,6 +19,7 @@ public class PlayerStats : UdonSharpBehaviour
         PlayerHealth = MaximumHealth;
         PlayerHUD.UpdateHPCount(PlayerHealth, MaximumHealth);
         PlayerVRHUD.UpdateHPCount(PlayerHealth, MaximumHealth);
+        PlayerVRHUD.UpdateMoneyCounter(PlayerMoney);
     }
 
     public void TakeDamage(int damageAmount)

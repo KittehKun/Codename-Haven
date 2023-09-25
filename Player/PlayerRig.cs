@@ -15,7 +15,6 @@ public class PlayerRig : UdonSharpBehaviour
     private VRCObjectPool objectPool; //ObjectPool for the player's rig | Assigned in Unity inspector
     private GameObject equippedWeapon = null; //Equipped weapon | Assigned in Unity inspector
     private VRCPlayerApi.TrackingData playerHead; //Player's head tracking data | Assigned in Update()
-    private VRCPlayerApi.TrackingData playerOrigin; //Player's origin tracking data | Assigned in Update()
     public bool weaponInRig = false;
 
     void Start()
@@ -23,37 +22,42 @@ public class PlayerRig : UdonSharpBehaviour
         localPlayer = Networking.LocalPlayer; //Assign localPlayer to the player who owns this script
         spawnArea = this.transform.gameObject; //Assign spawnArea to the player's rig
 
-        //Rotate the spawnArea 90 degrees on the y axis
-        spawnArea.transform.Rotate(0, 90, 0);
-
         //Disable the mesh renderer for the spawnArea
         spawnArea.GetComponent<MeshRenderer>().enabled = false;
     }
 
     void Update()
     {
+        //Assign the player's head tracking data to a variable
         playerHead = localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
-        playerOrigin = localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Origin);
-        float halfYPos = (playerHead.position.y - playerOrigin.position.y) / 2 + 0.25f;
 
-        //Set rig to player's hip bone
-        if(localPlayer.GetBonePosition(HumanBodyBones.Hips) == Vector3.zero)
+        //Update rotation of the spawnArea to match the player's head rotation
+        spawnArea.transform.rotation = playerHead.rotation;
+        
+        //Check if the player is holding "H" on the keyboard
+        if(Input.GetKey(KeyCode.H))
         {
-            //Set the spawnArea's position to the player's head position
-            spawnArea.transform.position = new Vector3(playerHead.position.x, halfYPos, playerHead.position.z);
-            spawnArea.transform.rotation = playerHead.rotation;
-
-            //Offset the spawnArea's position by 0.25 units away from the spawnArea's forward direction
-            spawnArea.transform.position += spawnArea.transform.forward * 0.25f;
-            //This is a temporary fix for Avatar's without a hip bone
+            //Move the spawnArea in front of the player's view
+            spawnArea.transform.position = playerHead.position + (playerHead.rotation * new Vector3(0, 0, 0.5f));
         } else
         {
-            spawnArea.transform.position = localPlayer.GetBonePosition(HumanBodyBones.Hips);
-            spawnArea.transform.rotation = localPlayer.GetBoneRotation(HumanBodyBones.Hips);
-            //Offset the spawnArea's position by 0.25 units away from the spawnArea's forward direction
-            spawnArea.transform.position += spawnArea.transform.forward * 0.25f;
-        }
+            //Check if the player is not the local player
+            if(!Networking.IsOwner(this.gameObject))
+            {
+                //Move the spawnArea to the player's back by taking the average position of the player's head and player origin
+                Vector3 playerOriginPos = localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Origin).position;
 
+                //Offset the playerOriginPos by 0.5 on the x-axis
+                playerOriginPos.x += 0.5f;
+
+                spawnArea.transform.position = (playerHead.position + playerOriginPos) / 2;
+            } else
+            {
+                //Move the spawnArea behind the player's head
+                spawnArea.transform.position = playerHead.position - (playerHead.rotation * new Vector3(0, 0, 0.5f));
+            }
+            
+        }
         
         if(weaponInRig && equippedWeapon != null && !(bool) equippedWeapon.GetComponent<UdonBehaviour>().GetProgramVariable("isHeld"))
         {
@@ -118,6 +122,18 @@ public class PlayerRig : UdonSharpBehaviour
             Networking.SetOwner(Networking.LocalPlayer, this.equippedWeapon);
             weaponInRig = true;
             this.equippedWeapon.GetComponent<Collider>().enabled = true;
+        }
+    }
+
+    //This method will handle returning the weapon to the ObjectPool if the player leaves the world
+    public override void OnPlayerLeft(VRCPlayerApi player)
+    {
+        if(player == Networking.LocalPlayer)
+        {
+            if(WeaponAlreadyEquipped())
+            {
+                ReturnWeaponToPool();
+            }
         }
     }
 }

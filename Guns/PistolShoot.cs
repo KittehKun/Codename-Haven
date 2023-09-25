@@ -1,6 +1,7 @@
 ﻿
 using UdonSharp;
 using UnityEngine;
+using VRC.SDKBase;
 using VRC.Udon;
 
 //This script is used to shoot the pistol using a Raycast
@@ -63,7 +64,7 @@ public class PistolShoot : UdonSharpBehaviour
         Debug.DrawRay(barrel.position, barrel.TransformDirection(direction * Range));
 
         //Check to see if player is pressing R to reload
-        if (Input.GetKeyDown(KeyCode.R) && currentAmmo < MaxAmmo && !isReloading)
+        if (Input.GetKeyDown(KeyCode.E) && currentAmmo < MaxAmmo && !isReloading)
         {
             Debug.Log("Player is reloading.");
             Reload();
@@ -97,13 +98,12 @@ public class PistolShoot : UdonSharpBehaviour
         if (currentAmmo > 0 && !isReloading)
         {
             Debug.Log("Player fired weapon.");
-            SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "Shoot");
-            SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "PlayMuzzleFlash");
+            Shoot();
         }
         else if (currentAmmo == 0 && !isReloading)
         {
             Debug.Log("Player is out of ammo.");
-            SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "PlayEmptySound");
+            PlayEmptySound();
         }
         else
         {
@@ -120,6 +120,9 @@ public class PistolShoot : UdonSharpBehaviour
         //Play gunshot sound
         GunShot.Play();
 
+        //Play muzzle flash particle effect
+        PlayMuzzleFlash();
+
         //Subtract 1 from AmmoCount
         currentAmmo -= 1;
 
@@ -131,6 +134,11 @@ public class PistolShoot : UdonSharpBehaviour
         //Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out HitData, Range) | This line of code returns true or false if the Ray hits something
         if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out RaycastHit HitData, Range, layerMask, QueryTriggerInteraction.Ignore)) //Check to see if Ray hit any colliders
         {
+            GameObject enemy = HitData.transform.gameObject; //Define enemy as the GameObject that the Ray hit
+
+            //Set owner of the gameobject that the Ray hit to the player that shot the gun
+            Networking.SetOwner(Networking.LocalPlayer, enemy);
+            
             //With layer mask defined, we can now check to see if the Ray hit an enemy
             //Call TakeDamage method on enemy
             HitData.transform.gameObject.GetComponent<EnemyScript>().TakeDamage(Damage);

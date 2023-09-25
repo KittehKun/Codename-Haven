@@ -47,4 +47,10 @@ public class PlayerVRHUD : UdonSharpBehaviour
         //Get the "HP Counter" GameObject and update the Text with the new HealthPoint count
         GameObject.Find("VR HP Counter").transform.GetComponent<TMPro.TextMeshProUGUI>().text = $"HP: {newHPCount}/{newMaxHPCount}";
     }
+
+    public static void UpdateMoneyCounter(int newMoneyCount)
+    {
+        //Get the "Money Counter" GameObject and update the Text with the new Money count
+        GameObject.Find("VR Money Counter").transform.GetComponent<TMPro.TextMeshProUGUI>().text = $"$ {newMoneyCount}";
+    }
 }

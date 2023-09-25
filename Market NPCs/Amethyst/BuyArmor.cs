@@ -10,6 +10,7 @@ public class BuyArmor : UdonSharpBehaviour
     private int[] armorPrices; //Assigned in Start()
     public PlayerStats playerStats; //Assigned in Unity
     private AudioSource buySFX; //Assigned in Start()
+
     void Start()
     {
         armorPrices = new int[3] { 1000, 2000, 3500 };
@@ -29,12 +30,36 @@ public class BuyArmor : UdonSharpBehaviour
             {
                 case 0:
                     playerStats.SetMaximumHealth(150);
+                    if(playerStats.PlayerHealth > 150)
+                    {
+                        playerStats.PlayerHealth = 150;
+                    }
+
+                    //Update HP counter for both desktop and VR
+                    PlayerVRHUD.UpdateHPCount(playerStats.PlayerHealth, playerStats.MaximumHealth);
+                    PlayerVRHUD.UpdateMoneyCounter(playerStats.PlayerMoney);
                     break;
                 case 1:
                     playerStats.SetMaximumHealth(175);
+                    if (playerStats.PlayerHealth > 175)
+                    {
+                        playerStats.PlayerHealth = 175;
+                    }
+
+                    //Update HP counter for both desktop and VR
+                    PlayerVRHUD.UpdateHPCount(playerStats.PlayerHealth, playerStats.MaximumHealth);
+                    PlayerVRHUD.UpdateMoneyCounter(playerStats.PlayerMoney);
                     break;
                 case 2:
                     playerStats.SetMaximumHealth(200);
+                    if (playerStats.PlayerHealth > 200)
+                    {
+                        playerStats.PlayerHealth = 200;
+                    }
+
+                    //Update HP counter for both desktop and VR
+                    PlayerVRHUD.UpdateHPCount(playerStats.PlayerHealth, playerStats.MaximumHealth);
+                    PlayerVRHUD.UpdateMoneyCounter(playerStats.PlayerMoney);
                     break;
             }
 

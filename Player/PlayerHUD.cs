@@ -1,4 +1,5 @@
 ﻿
+using System;
 using TMPro;
 using UdonSharp;
 using UnityEngine;
@@ -6,6 +7,7 @@ using UnityEngine.InputSystem.EnhancedTouch;
 using VRC.SDKBase;
 using VRC.Udon;
 
+[Obsolete("This script is no longer used as PlayerVRHUD.cs handles all HUD elements regardless of VR or not. Please use PlayerVRHUD.cs instead.", true)]
 public class PlayerHUD : UdonSharpBehaviour
 {
     private GameObject playerHUD; //The player's HUD which contains the UI elements. Should be attached to the player's head.

@@ -9,7 +9,6 @@ public class PurchaseMP5 : UdonSharpBehaviour
 {
     public PlayerStats playerMoney; //Assigned in Unity
     public PlayerInventory playerInventory; //Assigned Unity
-    public GameObject wendigoMoneyCounter; //Assigned in Unity
     public int MP5Price; //Assigned in Unity
     private AudioSource buySFX; //Assigned in Start()
     void Start()
@@ -26,7 +25,7 @@ public class PurchaseMP5 : UdonSharpBehaviour
         playerInventory.PlayerOwnedSMGs[1]++; //Add one to pistol counter
 
         //Update the money counter and play the buy sound
-        wendigoMoneyCounter.GetComponent<Text>().text = $"${playerMoney.PlayerMoney}";
+        PlayerVRHUD.UpdateMoneyCounter(playerMoney.PlayerMoney);
 
         //Play Buy SFX
         buySFX.Play();

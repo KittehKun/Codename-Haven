@@ -8,9 +8,7 @@ using VRC.Udon;
 public class PurchaseSelectedSniper : UdonSharpBehaviour
 {
     public PlayerStats playerMoney; //Assigned in Unity
-    public PlayerInventory playerInventory; //Assigned Unity
-    public GameObject wendigoMoneyCounter; //Assigned in Unity
-    
+    public PlayerInventory playerInventory; //Assigned Unity    
     public int SelectedSniper; //Assigned in Unity | Value will be used to select index from array
     private int[] SniperPrices; // HuntingRifle | Winchester | SVD | AWP | RSASS | 50Cal
 
@@ -28,7 +26,7 @@ public class PurchaseSelectedSniper : UdonSharpBehaviour
        {
         playerMoney.PlayerMoney -= SniperPrices[SelectedSniper];
         playerInventory.PlayerOwnedSnipers[SelectedSniper]++; //Add one to pistol counter
-        wendigoMoneyCounter.GetComponent<Text>().text = $"${playerMoney.PlayerMoney}";
+        PlayerVRHUD.UpdateMoneyCounter(playerMoney.PlayerMoney);
         buySFX.Play();
        }
        else
