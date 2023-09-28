@@ -4,13 +4,14 @@ using UnityEngine;
 using UnityEngine.AI;
 using VRC.SDKBase;
 using VRC.Udon;
+using VRC.Udon.Wrapper.Modules;
 
 //The purpose of this script is to handle enemy logic - will be attached to enemy prefabs
 public class EnemyScript : UdonSharpBehaviour
 {
     public Collider attackCollider; //This collider will be used to detect players using the OnPlayerTriggerEnter() event from the VRC Api | Assigned in Unity
     private NavMeshAgent agent; //This is the navmesh agent that will be used to move the enemy
-    [UdonSynced] public Vector3 targetDestination; //This is the target destination that the enemy will move to
+    public Vector3 targetDestination; //This is the target destination that the enemy will move to
     public Vector3 spawnLocation; //This is the spawn location of the enemy
     public float enemyRange = 10f; //This is the range that the enemy will attempt to move to
     public int enemyHealth = 100; //This is the health of the enemy
@@ -23,14 +24,12 @@ public class EnemyScript : UdonSharpBehaviour
 
     //Flags
     public bool isMoving = false; //This flag will be used to determine if the enemy is moving
-    [UdonSynced] public bool hasDestination = false; //This flag will be used to determine if the enemy has a target destination
+    public bool hasDestination = false; //This flag will be used to determine if the enemy has a target destination
     public bool attackingPlayer = false; //This flag will be used to determine if the enemy is attacking a player
     public bool isWaiting = false; //This flag will be used to determine if the enemy is waiting at a destination
-    private bool waitStarted = false; //This flag will be used to determine if the wait has started
     private bool alreadyAttacked = false; //This flag will be used to determine if the enemy has already attacked the player
-    [UdonSynced] private bool isRespawning = false; //This flag will be used to determine if the enemy is respawning
     
-    [UdonSynced] public bool isDead = false; //This flag will be used to determine if the enemy is dead
+    public bool isDead = false; //This flag will be used to determine if the enemy is dead
 
     //PlayerHitbox Script
     public PlayerStats playerStats; //Assigned in Unity | This script will be used to damage the player
@@ -74,28 +73,23 @@ public class EnemyScript : UdonSharpBehaviour
         //Set the spawnLocations array to the spawnLocationContainer's childCount
         spawnLocations = spawnLocationContainer.GetComponentsInChildren<Transform>();
 
-        //DEBUG CODE BELOW
+        //Guard Code - Check if the NavMesh was baked properly and if the Agent is on the mesh. If not disable the GameObject.
         if (!agent.isOnNavMesh)
         {
+            Debug.Log("Agent not on a NavMesh!");
             //Disable the GameObject
             this.gameObject.SetActive(false);
         }
 
-        //agent.updatePosition = false;
+        agent.updatePosition = true; //We will not be updating the agent's position manually | Explicitly set to true here for code visibility
     }
 
     void Update()
     {
         //If the enemy does not have a target destination, generate a random one
-        if (!hasDestination && !isMoving && !attackingPlayer && !waitStarted && !isDead)
+        if (!hasDestination && !isMoving && !attackingPlayer && !isWaiting && !isDead)
         {
-            if(Networking.IsOwner(this.gameObject))
-            {
-                GenerateRandomDestination();
-            } else
-            {
-                agent.SetDestination(targetDestination); //Owner generates random destination
-            }
+            GenerateRandomDestination();
         }
 
         //If the enemy has a target destination, check if it has reached it
@@ -107,10 +101,10 @@ public class EnemyScript : UdonSharpBehaviour
                 hasDestination = false;
                 isMoving = false;
 
-                if (!waitStarted)
+                if (!isWaiting)
                 {
                     SendCustomEventDelayedSeconds("ResetMovementFlags", 2f);
-                    waitStarted = true;
+                    isWaiting = true;
 
                     //Play Idle Animation if it's not playing
                     enemyAnimator.Play("Idle");
@@ -128,10 +122,6 @@ public class EnemyScript : UdonSharpBehaviour
             Vector3 newDirection = Vector3.RotateTowards(transform.forward, targetDirection, 1f, 0f);
             transform.rotation = Quaternion.LookRotation(newDirection);
         }
-        else if (isDead)
-        {
-            Debug.Log("Agent is dead.");
-        }
     }
 
     public void ResetMovementFlags()
@@ -139,7 +129,7 @@ public class EnemyScript : UdonSharpBehaviour
         hasDestination = false;
         isMoving = false;
         isWaiting = false;
-        waitStarted = false;
+        isWaiting = false;
         //Debug.Log("Agent has reset movement flags.");
     }
 
@@ -279,18 +269,19 @@ public class EnemyScript : UdonSharpBehaviour
         //Subtract the damage from the enemy's health
         enemyHealth -= damage;
 
-        //If the enemy's health is less than or equal to 0, destroy the enemy
+        //If the enemy's health is less than or equal to 0, kill the enemy locally
         if (enemyHealth <= 0 && !isDead)
         {
-            //Disable the Capsule Collider locally
+            //Disable the Capsule Collider
             this.GetComponent<CapsuleCollider>().enabled = false;
+            attackCollider.enabled = false;
 
-            //Send a network event to kill the agent
-            SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "KillAgent");
+            //Send a local event to kill the agent
+            KillAgent();
         }
     }
 
-    //This function will be used to kill the agent | Called over network
+    //This function will be used to kill the agent
     public void KillAgent()
     {
         isDead = true; //Set the isDead flag to true
@@ -298,15 +289,11 @@ public class EnemyScript : UdonSharpBehaviour
         hasDestination = false; //Set the hasDestination flag to false
         isMoving = false; //Set the isMoving flag to false
         isWaiting = false; //Set the isWaiting flag to false
-        waitStarted = false; //Set the waitStarted flag to false
+        isWaiting = false; //Set the waitStarted flag to false
         alreadyAttacked = false; //Set the alreadyAttacked flag to false
 
         //Stop the Agent
         agent.isStopped = true;
-
-        //Disable the attack collider to prevent the enemy from attacking while dead
-        attackCollider.enabled = false;
-        //this.GetComponent<CapsuleCollider>().enabled = false;
 
         switch (Random.Range(0, 3)) //Chooses between 0 and 2 | Currently have 3 death animations
         {
@@ -340,42 +327,28 @@ public class EnemyScript : UdonSharpBehaviour
                 break;
         }
 
-        //Respawn the enemy after 30 seconds using the RespawnEnemy() function
-        if(Networking.IsOwner(this.gameObject) && !isRespawning)
-        {
-            isRespawning = true;
-            SendCustomEventDelayedSeconds("CallNetworkRespawnEnemy", 180f);
-        }
-        
-    }
-
-    //This function will be used to send a network event to respawn the enemy
-    public void CallNetworkRespawnEnemy()
-    {
-        //Reset the attack colliders
-        attackCollider.enabled = true;
-        //this.GetComponent<CapsuleCollider>().enabled = true;
-
-        //Reset agent flags
-        hasDestination = false;
-        isMoving = false;
-        isWaiting = false;
-        waitStarted = false;
-        alreadyAttacked = false;
-        attackingPlayer = false;
-        isDead = false;
-
-        SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "RespawnEnemy");
+        //Respawn the enemy after 180 seconds using the RespawnEnemy() function
+        SendCustomEventDelayedSeconds("RespawnEnemy", 180f);
     }
 
     //This function will be used to respawn the enemy
     public void RespawnEnemy()
     {
+        //Reset the attack colliders
+        attackCollider.enabled = true;
+        this.GetComponent<CapsuleCollider>().enabled = true;
+
+        //Reset agent flags
+        hasDestination = false;
+        isMoving = false;
+        isWaiting = false;
+        isWaiting = false;
+        alreadyAttacked = false;
+        attackingPlayer = false;
+        isDead = false;
+        
         //Reset enemy health
         enemyHealth = 100;
-
-        //Enable the Capsule Collider locally
-        this.GetComponent<CapsuleCollider>().enabled = true;
 
         //Reset the enemy's position to a random spawn location
         this.transform.position = spawnLocations[Random.Range(0, spawnLocations.Length)].position;

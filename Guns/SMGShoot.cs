@@ -173,12 +173,7 @@ public class SMGShoot : UdonSharpBehaviour
         //Cast out Ray and output GameObject that the Ray hit
         //Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out HitData, Range) | This line of code returns true or false if the Ray hits something
         if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out RaycastHit HitData, Range, layerMask, QueryTriggerInteraction.Ignore)) //Check to see if Ray hit any colliders
-        {
-            GameObject enemy = HitData.transform.gameObject; //Define enemy as the GameObject that the Ray hit
-
-            //Set owner of the gameobject that the Ray hit to the player that shot the gun
-            Networking.SetOwner(Networking.LocalPlayer, enemy);
-            
+        {   
             //With layer mask defined, we can now check to see if the Ray hit an enemy
             //Call TakeDamage method on enemy
             HitData.transform.gameObject.GetComponent<EnemyScript>().TakeDamage(Damage);

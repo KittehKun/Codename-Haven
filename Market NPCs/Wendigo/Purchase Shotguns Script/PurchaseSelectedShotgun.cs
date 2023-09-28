@@ -13,11 +13,15 @@ public class PurchaseSelectedShotgun : UdonSharpBehaviour
     private int[] ShotgunPrices; // M590A1 | Double Barrel | M1014 | SPAS 12 | AA12
 
     private AudioSource buySFX; //Assigned in Start()
+    private AudioSource errorSFX; //Assigned in Start()
 
     void Start()
     {
         ShotgunPrices = new int[] {300 , 150, 450, 700, 750};
         this.buySFX = GameObject.Find("PlayerBuyItemAudio").GetComponent<AudioSource>();
+
+        //Find errorSFX in the PlayerScriptsContainer and the PlayerUIError GameObject
+        this.errorSFX = GameObject.Find("PlayerScriptsContainer").transform.Find("PlayerErrorAudio").GetComponent<AudioSource>();
     }
 
     public override void Interact()
@@ -37,6 +41,8 @@ public class PurchaseSelectedShotgun : UdonSharpBehaviour
        else
        {
         Debug.Log("User attempted to buy gun but do not have enough money or their stash is full.");
+        //Play the error sound
+        errorSFX.Play();
        }
     }
 }

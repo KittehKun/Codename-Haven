@@ -13,11 +13,15 @@ public class PurchaseSelectedSniper : UdonSharpBehaviour
     private int[] SniperPrices; // HuntingRifle | Winchester | SVD | AWP | RSASS | 50Cal
 
     private AudioSource buySFX; //Assigned in Start()
+    private AudioSource errorSFX; //Assigned in Start()
 
     void Start()
     {
         SniperPrices = new int[] {500 , 600, 700, 4750, 5000, 7500};
         this.buySFX = GameObject.Find("PlayerBuyItemAudio").GetComponent<AudioSource>();
+
+        //Find errorSFX in the PlayerScriptsContainer and the PlayerUIError GameObject
+        this.errorSFX = GameObject.Find("PlayerScriptsContainer").transform.Find("PlayerErrorAudio").GetComponent<AudioSource>();
     }
 
     public override void Interact()
@@ -32,6 +36,7 @@ public class PurchaseSelectedSniper : UdonSharpBehaviour
        else
        {
         Debug.Log("User attempted to buy gun but do not have enough money or their stash is full.");
+        errorSFX.Play();
        }
     }
 }
