@@ -142,6 +142,7 @@ public class PlayerRig : UdonSharpBehaviour
             if(WeaponAlreadyEquipped())
             {
                 ReturnWeaponToPool();
+                Debug.Log("Player left. Weapon returned to pool.");
             }
         }
     }
