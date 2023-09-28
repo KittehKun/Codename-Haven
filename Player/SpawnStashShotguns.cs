@@ -14,9 +14,11 @@ public class SpawnStashShotguns : UdonSharpBehaviour
     public GameObject stashTitle; //Assigned in Unity
     public GameObject[] shotgunCountText; //Assigned in Unity
     public GameObject backButton; //Assigned in Unity
+    private AudioSource uiSFX; //This is the UI SFX audio source | Assigned in Start()
     void Start()
     {
-        
+        //Find uiSFX in the PlayerScriptsContainer and the PlayerUISFX GameObject
+        uiSFX = playerScriptsContainer.transform.Find("PlayerUISFX").GetComponent<AudioSource>();
     }
 
     public override void Interact()
@@ -43,5 +45,8 @@ public class SpawnStashShotguns : UdonSharpBehaviour
         {
             shotgunCountText[i].GetComponent<Text>().text = $"{playerInventoryScript.PlayerOwnedShotguns[i]}"; //Updates stash screen with player owned Shotguns from array
         }
+
+        //Play the UI SFX
+        uiSFX.Play();
     }
 }

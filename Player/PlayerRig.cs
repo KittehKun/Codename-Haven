@@ -42,7 +42,7 @@ public class PlayerRig : UdonSharpBehaviour
         } else
         {
             //Check if the player is not the local player
-            if(!Networking.IsOwner(this.gameObject))
+            if(Networking.LocalPlayer != localPlayer)
             {
                 //Move the spawnArea to the player's back by taking the average position of the player's head and player origin
                 Vector3 playerOriginPos = localPlayer.GetTrackingData(VRCPlayerApi.TrackingDataType.Origin).position;
@@ -91,10 +91,18 @@ public class PlayerRig : UdonSharpBehaviour
     //Return the equipped weapon to the objectPool
     public void ReturnWeaponToPool()
     {        
+        //Check if there is a valid weapon equipped
+        if(!WeaponAlreadyEquipped())
+        {
+            Debug.Log("No weapon equipped. Returning to pool cancelled.");
+            return;
+        }
+        
         //Disable the weapon's collider
         equippedWeapon.GetComponent<Collider>().enabled = false;
         
         //Return the equippedWeapon to the objectPool
+        Networking.SetOwner(Networking.LocalPlayer, objectPool.gameObject);
         objectPool.Return(equippedWeapon);
 
         Debug.Log($"Returned {equippedWeapon.name} to pool.");
@@ -109,6 +117,7 @@ public class PlayerRig : UdonSharpBehaviour
         if(WeaponAlreadyEquipped())
         {
             Debug.Log("Weapon was already equipped. Returning equipped weapon to pool.");
+            Networking.SetOwner(Networking.LocalPlayer, objectPool.gameObject);
             objectPool.Return(this.equippedWeapon);
             equippedWeapon = null;
             SpawnWeapon();

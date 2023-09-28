@@ -17,7 +17,7 @@ public class PurchaseHealth : UdonSharpBehaviour
     void Start()
     {
         //Assign healthPrices array
-        healthPrices = new int[3] { 100, 200, 350 };
+        healthPrices = new int[3] { 125, 200, 350 };
         //Assign healthValues array
         healthValues = new int[3] { 25, 50, 100 }; //First tier adds +25 health, second tier adds +50 health, third tier adds +100 health
         //Assign buySFX
@@ -51,6 +51,8 @@ public class PurchaseHealth : UdonSharpBehaviour
             playerStats.PlayerMoney -= healthPrices[healthChoice];
             //Play buy sound
             buySFX.Play();
+            //Play heal sound
+            healSFX.Play();
             //Check if the player will overheal
             playerStats.PlayerHealth = HealPlayer();
             

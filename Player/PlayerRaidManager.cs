@@ -10,10 +10,12 @@ public class PlayerRaidManager : UdonSharpBehaviour
     private PlayerStats playerStats; //PlayerStats taken from parent GameObject | Should be within the PlayerScriptsContainer GameObject
     public AudioSource[] audioSources; //Array of audio sources | Used for playing victory sound | Assigned in Unity
     public AudioSource[] bigAudioSources; //Array of audio sources | Used for playing big victory sound | Assigned in Unity due to audio being special
+    private AudioSource deathSFX; //Death sound | Assigned in Unity
     public bool isInRaid = false; //Used for checking if player is in raid
     private Transform[] lootConatiners; //Array of loot containers | Used for resetting loot containers on extraction
     public Transform[] extractionPoints; //Array of extraction points | Assigned in Unity | Used for enabling extraction points on raid end | ARRAY IS GRABBED FROM ExtractPlayer script
     public Transform playerSpawnPoint; //Player spawn point | Assigned in Unity | Used for teleporting player to spawn point on death
+    public PlayerRig playerRig; //PlayerRig | Assigned in Unity | Used for returning weapon to pool on death
 
     void Start()
     {
@@ -28,6 +30,8 @@ public class PlayerRaidManager : UdonSharpBehaviour
         {
             lootConatiners[i] = GameObject.Find("_LOOTCONTAINERS").transform.GetChild(i);
         }
+        //Assign DeathSFX
+        deathSFX = GameObject.Find("PlayerDeathSFX").GetComponent<AudioSource>();
     }
 
     //Method is used for adding RaidWallet money to the player's inventory on successful extraction
@@ -38,7 +42,7 @@ public class PlayerRaidManager : UdonSharpBehaviour
         playerStats.AddMoney(raidInventory.GetCurrentRaidWallet());
         
         //Update Menu GUI with new money value | Includes shopkeepers and Main Menu
-        playerStats.UpdateMenuMoneyGUI();
+        //playerStats.UpdateMenuMoneyGUI(); //This code is redundant due to VR update method
         PlayerVRHUD.UpdateMoneyCounter(playerStats.PlayerMoney);
 
         //Check if the player extracted with more than 500 dollars
@@ -73,18 +77,20 @@ public class PlayerRaidManager : UdonSharpBehaviour
         if(playerDeath)
         {
             Debug.Log("Player died! Resetting PlayerHealth to 125 & MaximumHealth back to default.");
-            playerStats.PlayerHealth = 100;
+            playerStats.PlayerHealth = 50;
             playerStats.SetMaximumHealth(125);
-        } else
-        {
-            Debug.Log("Player extracted! Resetting PlayerHealth to MaximumHealth.");
-            playerStats.PlayerHealth = playerStats.MaximumHealth;
+
+            //Reset player rig
+            playerRig.ReturnWeaponToPool();
+
+            //Play death sound
+            Debug.Log("Playing death sound.");
+            deathSFX.Play();
         }
 
         //Reset HUD
         PlayerVRHUD.UpdateSPCount(raidInventory.StoragePoints);
         PlayerVRHUD.UpdateHPCount(playerStats.PlayerHealth, playerStats.MaximumHealth);
-        
         PlayerVRHUD.UpdateMoneyCounter(playerStats.PlayerMoney);
 
         //Reset loot containers
@@ -113,9 +119,21 @@ public class PlayerRaidManager : UdonSharpBehaviour
 
     private void ResetLootContainers()
     {
+        //Chance variable to roll 30% chance for loot container to not be reset
+        int chance;
+
         //Get all loot containers
         for (int i = 0; i < GameObject.Find("_LOOTCONTAINERS").transform.childCount; i++)
         {
+            //Roll for chance
+            chance = Random.Range(0, 100);
+
+            if(chance <= 30)
+            {
+                //If the chance is less than or equal to 30, do not reset the loot container
+                continue;
+            }
+            
             //Get the UdonBehavior script of each object and set the collider to true and the isLooted bool to false
             this.lootConatiners[i].GetComponent<UdonBehaviour>().SetProgramVariable("isLooted", false);
             //Set collider to true
@@ -139,9 +157,21 @@ public class PlayerRaidManager : UdonSharpBehaviour
 
     private void ResetOpenSafes()
     {
+        //Create a 60% chance for a safe to not be reset
+        int chance;
+        
         //Get all safes
         for (int i = 0; i < GameObject.Find("_SAFES").transform.childCount; i++)
         {
+            //Roll for chance
+            chance = Random.Range(0, 100);
+
+            //If the chance is less than or equal to 60, do not reset the safe
+            if(chance <= 60)
+            {
+                continue;
+            }
+            
             //Get the UdonBehavior script of each object and set the collider to true and the isLooted bool to false
             GameObject.Find("_SAFES").transform.GetChild(i).GetComponent<UdonBehaviour>().SetProgramVariable("isLooted", false);
             //Set collider to true

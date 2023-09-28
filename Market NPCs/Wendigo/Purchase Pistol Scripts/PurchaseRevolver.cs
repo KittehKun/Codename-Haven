@@ -11,9 +11,13 @@ public class PurchaseRevolver : UdonSharpBehaviour
     public PlayerInventory playerInventory; //Assigned Unity
     public int RevolverPrice; //Assigned in Unity
     private AudioSource buySFX; //Assigned in Start()
+    private AudioSource errorSFX; //Assigned in Start()
     void Start()
     {
         this.buySFX = GameObject.Find("PlayerBuyItemAudio").GetComponent<AudioSource>();
+
+        //Find errorSFX in the PlayerScriptsContainer and the PlayerUIError GameObject
+        this.errorSFX = GameObject.Find("PlayerScriptsContainer").transform.Find("PlayerErrorAudio").GetComponent<AudioSource>();
     }
 
     public override void Interact()
@@ -25,6 +29,7 @@ public class PurchaseRevolver : UdonSharpBehaviour
        else
        {
         Debug.Log("User attempted to buy gun but do not have enough money.");
+        errorSFX.Play();
        }
     }
 

@@ -14,11 +14,15 @@ public class PurchaseSelectedAR : UdonSharpBehaviour
     private int[] ARPrices; // M4 | AK | G36 | LVOA | AUG | M16
 
     private AudioSource buySFX; //Assigned in Start()
+    private AudioSource errorSFX; //Assigned in Start()
 
     void Start()
     {
         ARPrices = new int[] {750 , 600, 700, 1250, 750, 425};
         this.buySFX = GameObject.Find("PlayerBuyItemAudio").GetComponent<AudioSource>();
+
+        //Find errorSFX in the PlayerScriptsContainer and the PlayerUIError GameObject
+        this.errorSFX = GameObject.Find("PlayerScriptsContainer").transform.Find("PlayerErrorAudio").GetComponent<AudioSource>();
     }
 
     public override void Interact()
@@ -38,6 +42,8 @@ public class PurchaseSelectedAR : UdonSharpBehaviour
        else
        {
         Debug.Log("User attempted to buy gun but does not have enough money or their stash is full.");
+        //Play the error sound
+        errorSFX.Play();
        }
     }
 }

@@ -7,14 +7,14 @@ using VRC.Udon;
 
 public class PlayerStats : UdonSharpBehaviour
 {
-    public int PlayerMoney{get; set;} = 10000; //PlayerMoney | Used for storing player's money
-    public GameObject[] traderGUIs; //Assigned in Unity | Array needed for changing all shopkeeper displays on startup
+    public int PlayerMoney{get; set;} = 1000; //PlayerMoney | Used for storing player's money
+    //public GameObject[] traderGUIs; //Assigned in Unity | Array needed for changing all shopkeeper displays on startup
     public int PlayerHealth; //Default Health Value
     public int MaximumHealth {get; private set;} = 125; //Default Max Health Value
     public PlayerRaidManager playerRaidManager; //PlayerRaidManager | Assigned in Unity | Used for resetting player inventory
     void Start()
     {
-        UpdateMenuMoneyGUI();
+        //UpdateMenuMoneyGUI();
 
         PlayerHealth = MaximumHealth;
         PlayerVRHUD.UpdateHPCount(PlayerHealth, MaximumHealth);
@@ -53,18 +53,6 @@ public class PlayerStats : UdonSharpBehaviour
     public void AddMoney(int amount)
     {
         PlayerMoney += amount;
-    }
-
-    /// <summary>
-    /// Method is used for updating all GUIs that display the player's money.
-    /// </summary>
-    public void UpdateMenuMoneyGUI()
-    {
-        foreach(GameObject traderScreen in traderGUIs)
-        {
-            
-            traderScreen.GetComponent<Text>().text = $"${PlayerMoney}";
-        }
     }
 
     //This method will set the maximum health to a new value

@@ -10,11 +10,15 @@ public class BuyArmor : UdonSharpBehaviour
     private int[] armorPrices; //Assigned in Start()
     public PlayerStats playerStats; //Assigned in Unity
     private AudioSource buySFX; //Assigned in Start()
+    private AudioSource errorSFX; //Assigned in Start()
 
     void Start()
     {
         armorPrices = new int[3] { 1000, 2000, 3500 };
         this.buySFX = GameObject.Find("PlayerBuyItemAudio").GetComponent<AudioSource>();
+
+        //Find errorSFX in the PlayerScriptsContainer and the PlayerUIError GameObject
+        this.errorSFX = GameObject.Find("PlayerScriptsContainer").transform.Find("PlayerErrorAudio").GetComponent<AudioSource>();
     }
 
     public override void Interact()
@@ -69,6 +73,7 @@ public class BuyArmor : UdonSharpBehaviour
         else
         {
             Debug.Log("User attempted to buy armor but does not have enough money.");
+            errorSFX.Play();
         }
     }
 }

@@ -9,9 +9,11 @@ public class StashBackButton : UdonSharpBehaviour
     public GameObject[] stashScreens; //Assigned in Unity | Used for disabling all stash screens when user hits the back button. Might as well disable all instead of one lmao
     public GameObject[] stashButtons; //Assigned in Unity | Used for enabling all buttons when user hits the back button
     public GameObject[] stashModels; //Assigned in Unity | Used for disabling all stash models when user hits the back button
+    private AudioSource uiSFX; //This is the UI SFX audio source | Assigned in Start()
     void Start()
     {
-        
+        //Find uiSFX in the PlayerScriptsContainer and the PlayerUISFX GameObject
+        uiSFX = GameObject.Find("PlayerScriptsContainer").transform.Find("PlayerUISFX").GetComponent<AudioSource>();
     }
 
     public override void Interact()
@@ -33,5 +35,8 @@ public class StashBackButton : UdonSharpBehaviour
         {
             model.SetActive(false);
         }
+
+        //Play the UI SFX
+        uiSFX.Play();
     }
 }
