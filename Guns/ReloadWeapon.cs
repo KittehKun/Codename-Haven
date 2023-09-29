@@ -21,7 +21,7 @@ public class ReloadWeapon : UdonSharpBehaviour
         }
 
         //Enable Collider locally | Disabled in Unity inspector by default
-        this.GetComponent<Collider>().enabled = false;
+        this.GetComponent<Collider>().enabled = true; //Debug Line for now
     }
 
     public override void Interact()

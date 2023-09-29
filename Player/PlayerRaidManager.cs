@@ -16,6 +16,7 @@ public class PlayerRaidManager : UdonSharpBehaviour
     public Transform[] extractionPoints; //Array of extraction points | Assigned in Unity | Used for enabling extraction points on raid end | ARRAY IS GRABBED FROM ExtractPlayer script
     public Transform playerSpawnPoint; //Player spawn point | Assigned in Unity | Used for teleporting player to spawn point on death
     public PlayerRig playerRig; //PlayerRig | Assigned in Unity | Used for returning weapon to pool on death
+    public Leaderboard leaderboard; //Leaderboard | Assigned in Unity | Used for updating leaderboard on extraction
 
     void Start()
     {
@@ -101,6 +102,9 @@ public class PlayerRaidManager : UdonSharpBehaviour
 
         //Teleport Player to spawn point
         Networking.LocalPlayer.TeleportTo(playerSpawnPoint.position, playerSpawnPoint.rotation);
+
+        //Update the leaderboard
+        leaderboard.UpdateLeaderboard(playerStats.PlayerMoney);
     }
 
     private void PlayVictorySound()
