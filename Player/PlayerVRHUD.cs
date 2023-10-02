@@ -21,6 +21,8 @@ public class PlayerVRHUD : UdonSharpBehaviour
         {
             this.gameObject.SetActive(true);
         }
+
+        vrHUD.Find("VR XP Bar").transform.GetComponent<UnityEngine.UI.Slider>().value = 0; //Set the XP Bar to 0 to clear it
     }
 
     void Update()
@@ -52,5 +54,25 @@ public class PlayerVRHUD : UdonSharpBehaviour
     {
         //Get the "Money Counter" GameObject and update the Text with the new Money count
         GameObject.Find("VR Money Counter").transform.GetComponent<TMPro.TextMeshProUGUI>().text = $"$ {newMoneyCount}";
+    }
+
+    public static void UpdateXPBar(int expToAdd)
+    {   
+        //Get the VR XP Bar GameObject and update the Slider value according to the player level
+        //Slider component only uses whole numbers, maximum value is updated in PlayerStats.cs
+        GameObject.Find("VR XP Bar").transform.GetComponent<UnityEngine.UI.Slider>().value += expToAdd;
+    }
+
+    public static void UpdateLevel(int newLevel)
+    {
+
+        //Get the VR Level Counter GameObject and update the Text with the new Level
+        GameObject.Find("VR XP Bar").transform.Find("PlayerLevel").transform.GetComponent<TMPro.TextMeshProUGUI>().text = $"{newLevel}";
+    }
+
+    public static void UpdateXPToNextLevel(int newXPToNextLevel)
+    {
+        //Get the VR Level Counter GameObject and update the maximum value of the Slider
+        GameObject.Find("VR XP Bar").transform.GetComponent<UnityEngine.UI.Slider>().maxValue = newXPToNextLevel;
     }
 }

@@ -11,6 +11,9 @@ public class PlayerStats : UdonSharpBehaviour
     //public GameObject[] traderGUIs; //Assigned in Unity | Array needed for changing all shopkeeper displays on startup
     public int PlayerHealth; //Default Health Value
     public int MaximumHealth {get; private set;} = 125; //Default Max Health Value
+    public int PlayerLevel {get; set;} = 1; //Default Player Level | Earned by killing enemies and completing tasks
+    public int PlayerXP {get; set;} = 0; //Default Player XP | Earned by killing enemies and completing tasks
+    public int XPToNextLevel = 100; //Default XP needed to level up | Increases by 100 each level
     public PlayerRaidManager playerRaidManager; //PlayerRaidManager | Assigned in Unity | Used for resetting player inventory
     void Start()
     {
@@ -19,6 +22,9 @@ public class PlayerStats : UdonSharpBehaviour
         PlayerHealth = MaximumHealth;
         PlayerVRHUD.UpdateHPCount(PlayerHealth, MaximumHealth);
         PlayerVRHUD.UpdateMoneyCounter(PlayerMoney);
+        PlayerVRHUD.UpdateXPBar(PlayerXP);
+        PlayerVRHUD.UpdateXPToNextLevel(XPToNextLevel);
+        PlayerVRHUD.UpdateLevel(PlayerLevel);
     }
 
     public void TakeDamage(int damageAmount)
@@ -61,4 +67,27 @@ public class PlayerStats : UdonSharpBehaviour
         MaximumHealth = newMaxHealth;
     }
 
+    public void AddXP(int xpToAdd)
+    {
+        PlayerXP += xpToAdd;
+        PlayerVRHUD.UpdateXPBar(xpToAdd);
+
+        //Check if player has enough XP to level up
+        if(PlayerXP >= XPToNextLevel)
+        {
+            LevelUp();
+            //Reset XP bar to 0
+            PlayerVRHUD.UpdateXPBar(-XPToNextLevel);
+        }
+    }
+
+    private void LevelUp()
+    {
+        PlayerLevel++;
+        PlayerVRHUD.UpdateLevel(PlayerLevel);
+        PlayerVRHUD.UpdateXPBar(-XPToNextLevel);
+        XPToNextLevel += 100;
+        PlayerXP = 0;
+        PlayerVRHUD.UpdateXPToNextLevel(XPToNextLevel);
+    }
 }
