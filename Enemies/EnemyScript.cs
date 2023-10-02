@@ -329,6 +329,9 @@ public class EnemyScript : UdonSharpBehaviour
 
         //Respawn the enemy after 180 seconds using the RespawnEnemy() function
         SendCustomEventDelayedSeconds("RespawnEnemy", 180f);
+
+        //Add XP to player
+        playerStats.AddXP(Random.Range(5, 26));
     }
 
     //This function will be used to respawn the enemy

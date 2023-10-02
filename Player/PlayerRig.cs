@@ -137,13 +137,8 @@ public class PlayerRig : UdonSharpBehaviour
     //This method will handle returning the weapon to the ObjectPool if the player leaves the world
     public override void OnPlayerLeft(VRCPlayerApi player)
     {
-        if(player == Networking.LocalPlayer)
-        {
-            if(WeaponAlreadyEquipped())
-            {
-                ReturnWeaponToPool();
-                Debug.Log("Player left. Weapon returned to pool.");
-            }
-        }
+        //Once a player leaves, their weapon needs to be returned to the objectPool
+        //Ownership of GameObjects SHOULD be transferred to the master of the world
+        
     }
 }
