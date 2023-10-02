@@ -27,6 +27,8 @@ public class Leaderboard : UdonSharpBehaviour
                 leaderBoard[i] = playerMoney;
                 //Update the leaderboard's text fields taking in the index
                 UpdateLeaderboardText(i, playerMoney);
+                //Request Serialization
+                RequestSerialization();
                 //Break out of the loop
                 break;
             }
@@ -36,7 +38,16 @@ public class Leaderboard : UdonSharpBehaviour
     private void UpdateLeaderboardText(int placeIndex, int newPlayerMoney)
     {
         //Update the leaderboard's text fields taking in the index
-        leaderboardNames[placeIndex].text = Networking.LocalPlayer.displayName;
+        leaderboardNames[placeIndex].text = Networking.GetOwner(this.gameObject).displayName;
         moneyTexts[placeIndex].text = $"$ {newPlayerMoney}";
+    }
+
+    //Call OnDeserialization() when the leaderboard is updated on the network
+    public override void OnDeserialization()
+    {
+        //Update the leaderboard text for all remote players
+        UpdateLeaderboardText(0, leaderBoard[0]);
+        UpdateLeaderboardText(1, leaderBoard[1]);
+        UpdateLeaderboardText(2, leaderBoard[2]);
     }
 }
