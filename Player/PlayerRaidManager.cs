@@ -46,8 +46,8 @@ public class PlayerRaidManager : UdonSharpBehaviour
         //playerStats.UpdateMenuMoneyGUI(); //This code is redundant due to VR update method
         PlayerVRHUD.UpdateMoneyCounter(playerStats.PlayerMoney);
 
-        //Check if the player extracted with more than 500 dollars
-        if(raidInventory.GetCurrentRaidWallet() >= 500)
+        //Check if the player extracted with more than 1000 dollars
+        if(raidInventory.GetCurrentRaidWallet() >= 100)
         {
             //Play big victory sound
             PlayBigVictorySound();
