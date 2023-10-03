@@ -130,7 +130,7 @@ public class EnemyScript : UdonSharpBehaviour
             timer += Time.deltaTime;
 
             //If the timer reaches 60, respawn the enemy
-            if(timer >= 60)
+            if(timer >= 180)
             {
                 RespawnEnemy();
                 timer = 0;
@@ -345,8 +345,8 @@ public class EnemyScript : UdonSharpBehaviour
                 break;
         }
 
-        //Respawn the enemy after 60 seconds using the RespawnEnemy() function
-        //SendCustomEventDelayedSeconds("RespawnEnemy", 60); //Commented out for now due to testing if this line is what's causing players to crash
+        //Respawn the enemy after 180 seconds using the RespawnEnemy() function
+        //SendCustomEventDelayedSeconds("RespawnEnemy", 180); //Commented out for now due to testing if this line is what's causing players to crash
 
         //Add XP to player
         playerStats.AddXP(Random.Range(5, 26));
@@ -367,6 +367,7 @@ public class EnemyScript : UdonSharpBehaviour
         alreadyAttacked = false;
         attackingPlayer = false;
         isDead = false;
+        isRespawning = false;
         
         //Reset enemy health
         enemyHealth = 100;
@@ -377,8 +378,12 @@ public class EnemyScript : UdonSharpBehaviour
         //Reset the enemy's rotation
         this.transform.rotation = spawnLocations[Random.Range(0, spawnLocations.Length)].rotation;
 
+        //Set the spawnLocation to the enemy's current position
+        spawnLocation = this.transform.position;
+
         //Reset the agent's destination to the enemy's current position
-        agent.SetDestination(this.transform.position);
+        agent.Warp(spawnLocation); //This line should teleport the agent to the new spawn location
+        agent.SetDestination(spawnLocation); //This line should set the agent's destination to the new spawn location
 
         //Enable the agent
         agent.isStopped = false;
@@ -386,10 +391,7 @@ public class EnemyScript : UdonSharpBehaviour
         //Play the enemy idle animation
         enemyAnimator.Play("Idle");
 
-        //Set the spawnLocation to the enemy's current position
-        spawnLocation = this.transform.position;
-
-        Debug.Log("Enemy has respawned.");
+        Debug.Log($"Enemy has respawned at {spawnLocation}");
     }
 
     //This function will be called by the agent to play the spotted audio source
