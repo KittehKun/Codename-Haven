@@ -75,4 +75,22 @@ public class PlayerVRHUD : UdonSharpBehaviour
         //Get the VR Level Counter GameObject and update the maximum value of the Slider
         GameObject.Find("VR XP Bar").transform.GetComponent<UnityEngine.UI.Slider>().maxValue = newXPToNextLevel;
     }
+
+    public static void ShowDeathScreen()
+    {
+        //Get the VR Death Screen transform's children and set them to active
+        foreach(Transform child in GameObject.Find("VR Death Screen").transform)
+        {
+            child.gameObject.SetActive(true);
+        }
+    }
+
+    public static void HideDeathScreen()
+    {
+        //Get the VR Death Screen GameObject and set it to inactive
+        foreach(Transform child in GameObject.Find("VR Death Screen").transform)
+        {
+            child.gameObject.SetActive(false);
+        }
+    }
 }

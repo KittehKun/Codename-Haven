@@ -47,6 +47,16 @@ public class PlayerStats : UdonSharpBehaviour
     {
         Debug.Log("Player is dead!");
         playerRaidManager.ResetPlayer(true);
+        
+        //Display death screen
+        PlayerVRHUD.ShowDeathScreen();
+
+        this.SendCustomEventDelayedSeconds("TriggerHideDeathScreen", 7f); //Hide death screen after 7 seconds as audio clip is 7 seconds
+    }
+
+    public void TriggerHideDeathScreen()
+    {
+        PlayerVRHUD.HideDeathScreen();
     }
 
     //Gets PlayerMoney from Player
