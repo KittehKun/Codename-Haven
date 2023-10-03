@@ -52,7 +52,7 @@ public class PlayerRaidInventory : UdonSharpBehaviour
     /// </summary>
     public void ResetStoragePoints()
     {
-        this.StoragePoints = 20;
+        this.StoragePoints = StoragePointCap;
     }
 
 }
