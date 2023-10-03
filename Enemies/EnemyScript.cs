@@ -372,17 +372,22 @@ public class EnemyScript : UdonSharpBehaviour
         //Reset enemy health
         enemyHealth = 100;
 
-        //Reset the enemy's position to a random spawn location
-        this.transform.position = spawnLocations[Random.Range(0, spawnLocations.Length)].position;
+        //Set the enemy's spawn location to a random spawn location
+        spawnLocation = spawnLocations[Random.Range(0, spawnLocations.Length)].position;
 
-        //Reset the enemy's rotation
-        this.transform.rotation = spawnLocations[Random.Range(0, spawnLocations.Length)].rotation;
-
-        //Set the spawnLocation to the enemy's current position
-        spawnLocation = this.transform.position;
+        //Sample a NavMesh poistion close to the enemy's new spawn location
+        NavMesh.SamplePosition(spawnLocation, out NavMeshHit point, enemyRange, 1);
+        if(point.hit)
+        {
+            spawnLocation = point.position;
+        } else
+        {
+            //Call RespawnEnemy again and break out of the function to try again
+            RespawnEnemy();
+            return;
+        }
 
         //Reset the agent's destination to the enemy's current position
-        agent.Warp(spawnLocation); //This line should teleport the agent to the new spawn location
         agent.SetDestination(spawnLocation); //This line should set the agent's destination to the new spawn location
 
         //Enable the agent
