@@ -93,7 +93,7 @@ public class ARShoot : UdonSharpBehaviour
         currentAmmo = MaxAmmo;
 
         //Set isReloading to false after 2 seconds
-        this.GetComponent<UdonBehaviour>().SendCustomEventDelayedSeconds("ResetReloadingFlag", 1f);
+        SendCustomEventDelayedSeconds("ResetReloadingFlag", 1f);
     
         //Play reload animation
         arAnimator.Play("BeginReload");
@@ -182,7 +182,7 @@ public class ARShoot : UdonSharpBehaviour
         if (fullAuto && currentAmmo > 0) //Check to see if gun is full auto and if player has ammo
         {
             //Get this object's UdonBehaviour and do a SendCustomEventDelayedSeconds for Shoot()
-            this.GetComponent<UdonBehaviour>().SendCustomEventDelayedSeconds("Shoot", this.fullAutoDelay);
+            SendCustomEventDelayedSeconds("Shoot", this.fullAutoDelay);
         }
     }
 

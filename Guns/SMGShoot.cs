@@ -94,7 +94,7 @@ public class SMGShoot : UdonSharpBehaviour
         currentAmmo = maxAmmo;
 
         //Set isReloading to false after 2 seconds
-        this.GetComponent<UdonBehaviour>().SendCustomEventDelayedSeconds("ResetReloadingFlag", 1f);
+        SendCustomEventDelayedSeconds("ResetReloadingFlag", 1f);
 
         //Play reload animation
         smgAnimator.Play("BeginReload");
@@ -182,7 +182,7 @@ public class SMGShoot : UdonSharpBehaviour
         //If fullAuto is true, call Shoot method again after fullAutoDelay seconds
         if (fullAuto && currentAmmo > 0)
         {
-            this.GetComponent<UdonBehaviour>().SendCustomEventDelayedSeconds("Shoot", fullAutoDelay);
+            SendCustomEventDelayedSeconds("Shoot", fullAutoDelay);
         }
 
     }

@@ -130,7 +130,7 @@ public class EnemyScript : UdonSharpBehaviour
             timer += Time.deltaTime;
 
             //If the timer reaches 60, respawn the enemy
-            if(timer >= 180)
+            if(timer >= 30)
             {
                 RespawnEnemy();
                 timer = 0;

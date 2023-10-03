@@ -157,7 +157,7 @@ public class PistolShoot : UdonSharpBehaviour
         //Reset AmmoCount
         currentAmmo = MaxAmmo;
 
-        this.SendCustomEventDelayedSeconds("ResetReloadingFlag", 0.33f);
+        SendCustomEventDelayedSeconds("ResetReloadingFlag", 0.33f);
 
         pistolAnimator.Play("BeginReload");
     }

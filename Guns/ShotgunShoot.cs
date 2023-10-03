@@ -128,7 +128,7 @@ public class ShotgunShoot : UdonSharpBehaviour
         currentAmmo = maxAmmo;
 
         //Set isReloading to false after 2 seconds
-        this.GetComponent<UdonBehaviour>().SendCustomEventDelayedSeconds("ResetReloadingFlag", 1f);
+        SendCustomEventDelayedSeconds("ResetReloadingFlag", 1f);
     
         //Play reload animation
         shotgunAnimator.Play("BeginReload");
