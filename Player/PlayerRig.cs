@@ -17,6 +17,9 @@ public class PlayerRig : UdonSharpBehaviour
     private VRCPlayerApi.TrackingData playerHead; //Player's head tracking data | Assigned in Update()
     public bool weaponInRig = false;
 
+    //ID of the player who owns the pistol | Will be used for returning pistols to the ObjectPool when the player leaves
+    public int ownerID = 0; //0 = First player to start world
+
     void Start()
     {
         localPlayer = Networking.LocalPlayer; //Assign localPlayer to the player who owns this script
@@ -131,6 +134,10 @@ public class PlayerRig : UdonSharpBehaviour
             Networking.SetOwner(Networking.LocalPlayer, this.equippedWeapon);
             weaponInRig = true;
             this.equippedWeapon.GetComponent<Collider>().enabled = true;
+
+            //Set the ownerID to that of the owner of the weapon
+            ownerID = Networking.GetOwner(this.equippedWeapon).playerId;
+            Debug.Log($"Assigned ownerID of spawned weapon to {ownerID}.");
         }
     }
 
@@ -139,6 +146,11 @@ public class PlayerRig : UdonSharpBehaviour
     {
         //Once a player leaves, their weapon needs to be returned to the objectPool
         //Ownership of GameObjects SHOULD be transferred to the master of the world
-        
+        //If the player who left was the owner of the weapon, return the weapon to the objectPool
+        if(player.playerId == ownerID)
+        {
+            Debug.Log($"Player {player.displayName} [ID: {player.playerId}] left. Returning weapon to pool.");
+            ReturnWeaponToPool();
+        }
     }
 }
