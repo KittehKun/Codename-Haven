@@ -38,11 +38,20 @@ public class PlayerVRHUD : UdonSharpBehaviour
         vrHUD.position += vrHUD.forward * 1f;
     }
 
-    public static void UpdateSPCount(int newStoragePointCount)
+    //This method is called by the PlayerStats.cs script only when a player does not have a backpack
+    public static void UpdateSPCount(int newStoragePointCount, int newMaxStoragePointCount)
     {
         //Get the "SP Counter" GameObject and update the Text with the new StoragePoint count
-        GameObject.Find("VR SP Counter").transform.GetComponent<TMPro.TextMeshProUGUI>().text = $"SP: {newStoragePointCount}/20";
+        GameObject.Find("VR SP Counter").transform.GetComponent<TMPro.TextMeshProUGUI>().text = $"SP: {newStoragePointCount}/{newMaxStoragePointCount}";
     }
+
+    //This method is called when the player has a backpack
+    public static void UpdateMaxSPCount(int newStoragePointCount, int newMaxStoragePointCount)
+    {
+        //Get the "SP Counter" GameObject and update the Text with the new StoragePoint count
+        GameObject.Find("VR SP Counter").transform.GetComponent<TMPro.TextMeshProUGUI>().text = $"SP: {newStoragePointCount}/{newMaxStoragePointCount}";
+    }
+
 
     public static void UpdateHPCount(int newHPCount, int newMaxHPCount)
     {

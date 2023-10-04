@@ -90,7 +90,7 @@ public class PlayerRaidManager : UdonSharpBehaviour
         }
 
         //Reset HUD
-        PlayerVRHUD.UpdateSPCount(raidInventory.StoragePoints);
+        PlayerVRHUD.UpdateSPCount(raidInventory.StoragePoints, raidInventory.StoragePointCap);
         PlayerVRHUD.UpdateHPCount(playerStats.PlayerHealth, playerStats.MaximumHealth);
         PlayerVRHUD.UpdateMoneyCounter(playerStats.PlayerMoney);
 

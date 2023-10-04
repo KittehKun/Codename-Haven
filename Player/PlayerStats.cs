@@ -14,6 +14,7 @@ public class PlayerStats : UdonSharpBehaviour
     public int PlayerLevel {get; set;} = 1; //Default Player Level | Earned by killing enemies and completing tasks
     public int PlayerXP {get; set;} = 0; //Default Player XP | Earned by killing enemies and completing tasks
     public int XPToNextLevel = 100; //Default XP needed to level up | Increases by 100 each level
+    public bool HasBackpack {get; set;} = false; //Default HasBackpack | Used for checking if player has a backpack
     public PlayerRaidManager playerRaidManager; //PlayerRaidManager | Assigned in Unity | Used for resetting player inventory
     void Start()
     {
