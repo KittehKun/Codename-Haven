@@ -70,9 +70,6 @@ public class PlayerRaidManager : UdonSharpBehaviour
         //Reset RaidWallet
         raidInventory.ResetRaidWallet();
         Debug.Log($"Reset RaidWallet to {raidInventory.GetCurrentRaidWallet()}");
-        //Reset StoragePoints
-        raidInventory.ResetStoragePoints();
-        Debug.Log($"Reset StoragePoints to {raidInventory.StoragePoints}");
         
         //Reset PlayerHealth back to full if player extracted successfully
         if(playerDeath)
@@ -87,7 +84,14 @@ public class PlayerRaidManager : UdonSharpBehaviour
             //Play death sound
             Debug.Log("Playing death sound.");
             deathSFX.Play();
+
+            //Reset Storage Points back to Default
+            raidInventory.StoragePointCap = 25;
+            
         }
+
+        //Reset Storage Points to maximum
+        raidInventory.ResetStoragePoints();
 
         //Reset HUD
         PlayerVRHUD.UpdateSPCount(raidInventory.StoragePoints, raidInventory.StoragePointCap);
