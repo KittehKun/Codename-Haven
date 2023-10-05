@@ -14,10 +14,8 @@ public class PlayerRig : UdonSharpBehaviour
     private VRCPlayerApi localPlayer; //Local player | Assigned in Start()
     private VRCObjectPool objectPool; //ObjectPool for the player's rig | Assigned in Unity inspector
     private GameObject equippedWeapon = null; //Equipped weapon | Assigned in Unity inspector
-    private string weaponName; //Name of the weapon | Used to restore the weapon's name when returning to the object pool
     private VRCPlayerApi.TrackingData playerHead; //Player's head tracking data | Assigned in Update()
     public bool weaponInRig = false;
-    public Transform weaponPools; //Container for all weapon pools | Assigned in Unity inspector
 
     void Start()
     {
@@ -105,7 +103,6 @@ public class PlayerRig : UdonSharpBehaviour
         
         //Return the equippedWeapon to the objectPool
         Networking.SetOwner(Networking.LocalPlayer, objectPool.gameObject);
-        equippedWeapon.gameObject.name = weaponName;
         objectPool.Return(equippedWeapon);
 
         Debug.Log($"Returned {equippedWeapon.name} to pool.");
@@ -128,40 +125,13 @@ public class PlayerRig : UdonSharpBehaviour
             Debug.Log("No weapon equipped. Spawning weapon.");
             //Spawn the weapon from the objectPool
             equippedWeapon = objectPool.TryToSpawn();
-            weaponName = equippedWeapon.gameObject.name;
             Networking.SetOwner(Networking.LocalPlayer, this.equippedWeapon);
-            equippedWeapon.gameObject.name = $"[ID-{Networking.GetOwner(equippedWeapon).playerId}] {equippedWeapon.gameObject.name}"; //Add the owner's player ID to the weapon's name | Will be used when a player leaves to return the object to the pool
+
+            UdonBehaviour shootingBehavior = equippedWeapon.GetComponent<UdonBehaviour>();
+            shootingBehavior.SetProgramVariable("ownerID", Networking.GetOwner(equippedWeapon));
 
             weaponInRig = true;
             this.equippedWeapon.GetComponent<Collider>().enabled = true;
-        }
-    }
-
-    //This method will only be executed by the Master client | Returns inactive weapons to the object pool when a player leaves
-    //CURRENTLY UNTESTED ON VRCHAT BUILDS BUT WILL TEST TODAY 10/5/2023
-    public override void OnPlayerLeft(VRCPlayerApi player)
-    {
-        /* int playerID = player.playerId; */
-        Debug.Log(player.playerId + " has left the world. Checking if they owned a weapon.");
-        if(Utilities.IsValid(VRCPlayerApi.GetPlayerById(player.playerId))) return; //If the previous owner is valid, return
-        Debug.Log("Previous owner cannot be found. Checking if client is Master.");
-        if(!Networking.IsMaster) return; //If the client is not the Master, return
-        Debug.Log("Client is Master. Returning weapon to pool.");
-
-        //Find the weapon with the player's ID in the name
-        string weaponPrefix = $"[ID-{player.playerId}]";
-        GameObject weaponToReturn = GameObject.Find($"{weaponPrefix} {weaponName}");
-        if(weaponToReturn == null)
-        {
-            Debug.Log($"Unable to find weapon with name {weaponPrefix} {weaponName}.");
-            return;
-        } else
-        {
-            Debug.Log($"Returning {weaponToReturn.name} to pool.");
-            VRCObjectPool objPool = weaponToReturn.transform.parent.GetComponent<VRCObjectPool>();
-            Networking.SetOwner(Networking.LocalPlayer, objPool.gameObject); //Should be Master after above checks
-            weaponToReturn.gameObject.name = weaponName;
-            objPool.Return(weaponToReturn.gameObject);
         }
     }
 }

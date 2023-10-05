@@ -37,7 +37,6 @@ public class ShotgunShoot : UdonSharpBehaviour
     private int layerMask; //Used for raycast | Defined in Start() method
 
     //Object Pool
-    [HideInInspector] public VRCObjectPool objectPool; //Used for returning the AR to the Object Pool
     [HideInInspector] public int ownerID; //Used for returning the AR to the Object Pool
 
     void Start()
@@ -196,6 +195,16 @@ public class ShotgunShoot : UdonSharpBehaviour
             HitData.transform.gameObject.GetComponent<EnemyScript>().TakeDamage(Damage);
         }
 
-        
+    }
+
+    public override void OnPlayerLeft(VRCPlayerApi player)
+    {
+        if(Utilities.IsValid(player)) return; //If player is valid, return
+        if(!Networking.IsMaster) return; //If player is not master, return
+        if(ownerID != player.playerId) return; //If player is not owner, return
+
+        VRCObjectPool weaponPool = this.transform.parent.gameObject.GetComponent<VRCObjectPool>(); //Get the weapon pool
+        Networking.SetOwner(Networking.LocalPlayer, this.transform.parent.gameObject); //Sets the owner to the object pool as weapons are parented under the object pool
+        weaponPool.Return(this.gameObject); //Return the weapon to the object pool
     }
 }
