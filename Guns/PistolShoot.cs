@@ -1,6 +1,7 @@
 ﻿
 using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.Components;
 using VRC.SDKBase;
 using VRC.Udon;
 
@@ -34,6 +35,10 @@ public class PistolShoot : UdonSharpBehaviour
     //LayerMask Integer
     private int layerNumber = 31;
     private int layerMask;
+
+    //Object Pool
+    [HideInInspector] public VRCObjectPool objectPool; //Used for returning the AR to the Object Pool
+    [HideInInspector] public int ownerID; //Used for returning the AR to the Object Pool
 
     void Start()
     {
@@ -165,5 +170,16 @@ public class PistolShoot : UdonSharpBehaviour
     public void ResetReloadingFlag()
     {
         isReloading = false;
+    }
+
+    //Method used to return the AR to the Object Pool
+    public override void OnPlayerLeft(VRCPlayerApi player)
+    {
+        if(player.playerId == ownerID)
+        {
+            //Return the AR to the Object Pool
+            objectPool.Return(this.gameObject);
+            Debug.Log($"Returned AR to Object Pool from player {player.displayName}");
+        }
     }
 }

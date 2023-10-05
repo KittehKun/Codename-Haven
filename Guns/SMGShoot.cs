@@ -1,5 +1,6 @@
 ﻿using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.Components;
 using VRC.SDKBase;
 using VRC.Udon;
 
@@ -34,6 +35,10 @@ public class SMGShoot : UdonSharpBehaviour
     //LayerMask Integer
     private int layerNumber = 31; //Used for raycast | 32nd layer is the Enemy layer
     private int layerMask; //Used for raycast | Defined in Start() method
+
+    //Object Pool
+    [HideInInspector] public VRCObjectPool objectPool; //Used for returning the AR to the Object Pool
+    [HideInInspector] public int ownerID; //Used for returning the AR to the Object Pool
     
     void Start()
     {
@@ -185,6 +190,17 @@ public class SMGShoot : UdonSharpBehaviour
             SendCustomEventDelayedSeconds("Shoot", fullAutoDelay);
         }
 
+    }
+
+    //Method used to return the AR to the Object Pool
+    public override void OnPlayerLeft(VRCPlayerApi player)
+    {
+        if(player.playerId == ownerID)
+        {
+            //Return the AR to the Object Pool
+            objectPool.Return(this.gameObject);
+            Debug.Log($"Returned AR to Object Pool from player {player.displayName}");
+        }
     }
 
 }

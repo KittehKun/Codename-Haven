@@ -1,6 +1,7 @@
 ﻿
 using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.Components;
 using VRC.SDKBase;
 using VRC.Udon;
 
@@ -34,6 +35,10 @@ public class ShotgunShoot : UdonSharpBehaviour
     //LayerMask Integer
     private int layerNumber = 31; //Used for raycast | 32nd layer is the Enemy layer
     private int layerMask; //Used for raycast | Defined in Start() method
+
+    //Object Pool
+    [HideInInspector] public VRCObjectPool objectPool; //Used for returning the AR to the Object Pool
+    [HideInInspector] public int ownerID; //Used for returning the AR to the Object Pool
 
     void Start()
     {
@@ -189,6 +194,19 @@ public class ShotgunShoot : UdonSharpBehaviour
             //With layer mask defined, we can now check to see if the Ray hit an enemy
             //Call TakeDamage method on enemy
             HitData.transform.gameObject.GetComponent<EnemyScript>().TakeDamage(Damage);
+        }
+
+        
+    }
+
+    //Method used to return the AR to the Object Pool
+    public override void OnPlayerLeft(VRCPlayerApi player)
+    {
+        if(player.playerId == ownerID)
+        {
+            //Return the AR to the Object Pool
+            objectPool.Return(this.gameObject);
+            Debug.Log($"Returned AR to Object Pool from player {player.displayName}");
         }
     }
 }

@@ -16,9 +16,8 @@ public class PlayerRig : UdonSharpBehaviour
     private GameObject equippedWeapon = null; //Equipped weapon | Assigned in Unity inspector
     private VRCPlayerApi.TrackingData playerHead; //Player's head tracking data | Assigned in Update()
     public bool weaponInRig = false;
-
-    //ID of the player who owns the pistol | Will be used for returning pistols to the ObjectPool when the player leaves
-    public int ownerID = 0; //0 = First player to start world
+    public WeaponDictionary weaponDictionary; //WeaponDictionary | Assigned in Unity inspector
+    private UdonBehaviour shootingBehavior; //Shooting script of the equipped weapon | Assigned during SpawnWeapon() method
 
     void Start()
     {
@@ -135,22 +134,10 @@ public class PlayerRig : UdonSharpBehaviour
             weaponInRig = true;
             this.equippedWeapon.GetComponent<Collider>().enabled = true;
 
-            //Set the ownerID to that of the owner of the weapon
-            ownerID = Networking.GetOwner(this.equippedWeapon).playerId;
-            Debug.Log($"Assigned ownerID of spawned weapon to {ownerID}.");
-        }
-    }
-
-    //This method will handle returning the weapon to the ObjectPool if the player leaves the world
-    public override void OnPlayerLeft(VRCPlayerApi player)
-    {
-        //Once a player leaves, their weapon needs to be returned to the objectPool
-        //Ownership of GameObjects SHOULD be transferred to the master of the world
-        //If the player who left was the owner of the weapon, return the weapon to the objectPool
-        if(player.playerId == ownerID)
-        {
-            Debug.Log($"Player {player.displayName} [ID: {player.playerId}] left. Returning weapon to pool.");
-            ReturnWeaponToPool();
+            //Set the shootingBehavior to the UdonBehaviour of the equipped weapon
+            shootingBehavior = (UdonBehaviour) equippedWeapon.GetComponent(typeof(UdonBehaviour));
+            shootingBehavior.SetProgramVariable("objectPool", objectPool);
+            shootingBehavior.SetProgramVariable("ownerID", Networking.GetOwner(equippedWeapon).playerId);
         }
     }
 }
