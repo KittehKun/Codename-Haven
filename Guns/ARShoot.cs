@@ -38,7 +38,7 @@ public class ARShoot : UdonSharpBehaviour
 
     //Object Pool
     [HideInInspector] public VRCObjectPool objectPool; //Used for returning the AR to the Object Pool
-    [HideInInspector] public int ownerID; //Used for returning the AR to the Object Pool
+    [HideInInspector] [UdonSynced] public int ownerID; //Used for returning the AR to the Object Pool
 
     void Start()
     {
@@ -168,6 +168,10 @@ public class ARShoot : UdonSharpBehaviour
         //Play muzzle effect FX
         PlayMuzzleFX();
 
+        //Play Haptic Event for Object Owner
+        /* Networking.LocalPlayer.PlayHapticEventInHand(VRC_Pickup.PickupHand.Right, 0.2f, 0.4f, 0.2f);
+        Networking.LocalPlayer.PlayHapticEventInHand(VRC_Pickup.PickupHand.Left, 0.2f, 0.4f, 0.2f); */
+
         //Subtract 1 from currentAmmo
         currentAmmo -= 1;
 
@@ -194,16 +198,5 @@ public class ARShoot : UdonSharpBehaviour
     public void PlayGunShot()
     {
         GunShot.PlayOneShot(GunShot.clip);
-    }
-
-    //Method used to return the AR to the Object Pool
-    public override void OnPlayerLeft(VRCPlayerApi player)
-    {
-        if(player.playerId == ownerID)
-        {
-            //Return the AR to the Object Pool
-            objectPool.Return(this.gameObject);
-            Debug.Log($"Returned AR to Object Pool from player {player.displayName}");
-        }
     }
 }

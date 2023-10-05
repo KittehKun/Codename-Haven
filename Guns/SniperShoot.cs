@@ -185,15 +185,4 @@ public class SniperShoot : UdonSharpBehaviour
         SendCustomEventDelayedSeconds("ResetReadyToFireFlag", 0.66f);
     }
 
-    //Method used to return the AR to the Object Pool
-    public override void OnPlayerLeft(VRCPlayerApi player)
-    {
-        if(player.playerId == ownerID)
-        {
-            //Return the AR to the Object Pool
-            objectPool.Return(this.gameObject);
-            Debug.Log($"Returned AR to Object Pool from player {player.displayName}");
-        }
-    }
-
 }
