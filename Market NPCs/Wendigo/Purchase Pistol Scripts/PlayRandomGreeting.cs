@@ -11,7 +11,7 @@ public class PlayRandomGreeting : UdonSharpBehaviour
 
     void Start()
     {
-        GameObject voiceLines = this.transform.parent.transform.Find("Voicelines").gameObject;
+        GameObject voiceLines = this.transform.parent.Find("Voicelines").gameObject;
         npcGreetings = voiceLines.GetComponentsInChildren<AudioSource>(); //Get all the greetings
     }
 

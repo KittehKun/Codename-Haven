@@ -3,7 +3,6 @@ using System;
 using TMPro;
 using UdonSharp;
 using UnityEngine;
-using UnityEngine.InputSystem.EnhancedTouch;
 using VRC.SDKBase;
 using VRC.Udon;
 

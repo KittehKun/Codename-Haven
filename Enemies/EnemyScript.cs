@@ -28,8 +28,9 @@ public class EnemyScript : UdonSharpBehaviour
     public bool attackingPlayer = false; //This flag will be used to determine if the enemy is attacking a player
     public bool isWaiting = false; //This flag will be used to determine if the enemy is waiting at a destination
     private bool alreadyAttacked = false; //This flag will be used to determine if the enemy has already attacked the player
-    
     public bool isDead = false; //This flag will be used to determine if the enemy is dead
+    private bool isRespawning = false; //This flag will be used to determine if the enemy is respawning
+    private float timer = 0; //This timer will be used to determine when the enemy should respawn | If this value reaches 60, the enemy will respawn and this value will reset to 0
 
     //PlayerHitbox Script
     public PlayerStats playerStats; //Assigned in Unity | This script will be used to damage the player
@@ -87,13 +88,13 @@ public class EnemyScript : UdonSharpBehaviour
     void Update()
     {
         //If the enemy does not have a target destination, generate a random one
-        if (!hasDestination && !isMoving && !attackingPlayer && !isWaiting && !isDead)
+        if (!hasDestination && !isMoving && !attackingPlayer && !isWaiting && !isDead && !isRespawning)
         {
             GenerateRandomDestination();
         }
 
         //If the enemy has a target destination, check if it has reached it
-        if (hasDestination)
+        if (hasDestination && !isDead && !isRespawning)
         {
             //If the enemy has reached its destination, set the hasDestination flag to false
             if (agent.remainingDistance < 1f || agent.acceleration < 0.05f)
@@ -121,6 +122,19 @@ public class EnemyScript : UdonSharpBehaviour
             Vector3 targetDirection = localPlayer.GetPosition() - transform.position;
             Vector3 newDirection = Vector3.RotateTowards(transform.forward, targetDirection, 1f, 0f);
             transform.rotation = Quaternion.LookRotation(newDirection);
+        }
+
+        if(isDead || isRespawning)
+        {
+            //Increment the timer
+            timer += Time.deltaTime;
+
+            //If the timer reaches 60, respawn the enemy
+            if(timer >= 30)
+            {
+                RespawnEnemy();
+                timer = 0;
+            }
         }
     }
 
@@ -158,7 +172,7 @@ public class EnemyScript : UdonSharpBehaviour
         //Play the enemy walk animation
         enemyAnimator.Play("Move"); //Transitions into MoveLoop
 
-        Debug.Log("Enemy is moving to a random destination.");
+        //Debug.Log("Enemy is moving to a random destination."); //Debug log no longer needed as movement is working properly
     }
 
 
@@ -284,7 +298,11 @@ public class EnemyScript : UdonSharpBehaviour
     //This function will be used to kill the agent
     public void KillAgent()
     {
+        //True Flags
         isDead = true; //Set the isDead flag to true
+        isRespawning = true; //Set the isRespawning flag to true
+
+        //False Flags
         attackingPlayer = false; //Set the attackingPlayer flag to false
         hasDestination = false; //Set the hasDestination flag to false
         isMoving = false; //Set the isMoving flag to false
@@ -328,7 +346,7 @@ public class EnemyScript : UdonSharpBehaviour
         }
 
         //Respawn the enemy after 180 seconds using the RespawnEnemy() function
-        SendCustomEventDelayedSeconds("RespawnEnemy", 180f);
+        //SendCustomEventDelayedSeconds("RespawnEnemy", 180); //Commented out for now due to testing if this line is what's causing players to crash
 
         //Add XP to player
         playerStats.AddXP(Random.Range(5, 26));
@@ -349,18 +367,28 @@ public class EnemyScript : UdonSharpBehaviour
         alreadyAttacked = false;
         attackingPlayer = false;
         isDead = false;
+        isRespawning = false;
         
         //Reset enemy health
         enemyHealth = 100;
 
-        //Reset the enemy's position to a random spawn location
-        this.transform.position = spawnLocations[Random.Range(0, spawnLocations.Length)].position;
+        //Set the enemy's spawn location to a random spawn location
+        spawnLocation = spawnLocations[Random.Range(0, spawnLocations.Length)].position;
 
-        //Reset the enemy's rotation
-        this.transform.rotation = spawnLocations[Random.Range(0, spawnLocations.Length)].rotation;
+        //Sample a NavMesh poistion close to the enemy's new spawn location
+        NavMesh.SamplePosition(spawnLocation, out NavMeshHit point, enemyRange, 1);
+        if(point.hit)
+        {
+            spawnLocation = point.position;
+        } else
+        {
+            //Call RespawnEnemy again and break out of the function to try again
+            RespawnEnemy();
+            return;
+        }
 
         //Reset the agent's destination to the enemy's current position
-        agent.SetDestination(this.transform.position);
+        agent.SetDestination(spawnLocation); //This line should set the agent's destination to the new spawn location
 
         //Enable the agent
         agent.isStopped = false;
@@ -368,10 +396,7 @@ public class EnemyScript : UdonSharpBehaviour
         //Play the enemy idle animation
         enemyAnimator.Play("Idle");
 
-        //Set the spawnLocation to the enemy's current position
-        spawnLocation = this.transform.position;
-
-        Debug.Log("Enemy has respawned.");
+        Debug.Log($"Enemy has respawned at {spawnLocation}");
     }
 
     //This function will be called by the agent to play the spotted audio source

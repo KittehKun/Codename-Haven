@@ -1,6 +1,7 @@
 ﻿
 using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.Components;
 using VRC.SDKBase;
 using VRC.Udon;
 
@@ -34,6 +35,9 @@ public class PistolShoot : UdonSharpBehaviour
     //LayerMask Integer
     private int layerNumber = 31;
     private int layerMask;
+
+    //Object Pool
+    [HideInInspector] public int ownerID; //Used for returning the AR to the Object Pool
 
     void Start()
     {
@@ -157,7 +161,7 @@ public class PistolShoot : UdonSharpBehaviour
         //Reset AmmoCount
         currentAmmo = MaxAmmo;
 
-        this.SendCustomEventDelayedSeconds("ResetReloadingFlag", 0.33f);
+        SendCustomEventDelayedSeconds("ResetReloadingFlag", 0.33f);
 
         pistolAnimator.Play("BeginReload");
     }
@@ -165,5 +169,16 @@ public class PistolShoot : UdonSharpBehaviour
     public void ResetReloadingFlag()
     {
         isReloading = false;
+    }
+
+    public override void OnPlayerLeft(VRCPlayerApi player)
+    {
+        if(Utilities.IsValid(player)) return; //If player is valid, return
+        if(!Networking.IsMaster) return; //If player is not master, return
+        if(ownerID != player.playerId) return; //If player is not owner, return
+
+        VRCObjectPool weaponPool = this.transform.parent.gameObject.GetComponent<VRCObjectPool>(); //Get the weapon pool
+        Networking.SetOwner(Networking.LocalPlayer, this.transform.parent.gameObject); //Sets the owner to the object pool as weapons are parented under the object pool
+        weaponPool.Return(this.gameObject); //Return the weapon to the object pool
     }
 }

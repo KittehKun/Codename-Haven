@@ -117,9 +117,7 @@ public class PlayerRig : UdonSharpBehaviour
         if(WeaponAlreadyEquipped())
         {
             Debug.Log("Weapon was already equipped. Returning equipped weapon to pool.");
-            Networking.SetOwner(Networking.LocalPlayer, objectPool.gameObject);
-            objectPool.Return(this.equippedWeapon);
-            equippedWeapon = null;
+            ReturnWeaponToPool();
             SpawnWeapon();
         }
         else
@@ -127,18 +125,13 @@ public class PlayerRig : UdonSharpBehaviour
             Debug.Log("No weapon equipped. Spawning weapon.");
             //Spawn the weapon from the objectPool
             equippedWeapon = objectPool.TryToSpawn();
-            
             Networking.SetOwner(Networking.LocalPlayer, this.equippedWeapon);
+
+            UdonBehaviour shootingBehavior = equippedWeapon.GetComponent<UdonBehaviour>();
+            shootingBehavior.SetProgramVariable("ownerID", Networking.GetOwner(equippedWeapon));
+
             weaponInRig = true;
             this.equippedWeapon.GetComponent<Collider>().enabled = true;
         }
-    }
-
-    //This method will handle returning the weapon to the ObjectPool if the player leaves the world
-    public override void OnPlayerLeft(VRCPlayerApi player)
-    {
-        //Once a player leaves, their weapon needs to be returned to the objectPool
-        //Ownership of GameObjects SHOULD be transferred to the master of the world
-        
     }
 }

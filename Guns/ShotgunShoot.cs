@@ -1,6 +1,7 @@
 ﻿
 using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.Components;
 using VRC.SDKBase;
 using VRC.Udon;
 
@@ -34,6 +35,9 @@ public class ShotgunShoot : UdonSharpBehaviour
     //LayerMask Integer
     private int layerNumber = 31; //Used for raycast | 32nd layer is the Enemy layer
     private int layerMask; //Used for raycast | Defined in Start() method
+
+    //Object Pool
+    [HideInInspector] public int ownerID; //Used for returning the AR to the Object Pool
 
     void Start()
     {
@@ -128,7 +132,7 @@ public class ShotgunShoot : UdonSharpBehaviour
         currentAmmo = maxAmmo;
 
         //Set isReloading to false after 2 seconds
-        this.GetComponent<UdonBehaviour>().SendCustomEventDelayedSeconds("ResetReloadingFlag", 1f);
+        SendCustomEventDelayedSeconds("ResetReloadingFlag", 1f);
     
         //Play reload animation
         shotgunAnimator.Play("BeginReload");
@@ -190,5 +194,17 @@ public class ShotgunShoot : UdonSharpBehaviour
             //Call TakeDamage method on enemy
             HitData.transform.gameObject.GetComponent<EnemyScript>().TakeDamage(Damage);
         }
+
+    }
+
+    public override void OnPlayerLeft(VRCPlayerApi player)
+    {
+        if(Utilities.IsValid(player)) return; //If player is valid, return
+        if(!Networking.IsMaster) return; //If player is not master, return
+        if(ownerID != player.playerId) return; //If player is not owner, return
+
+        VRCObjectPool weaponPool = this.transform.parent.gameObject.GetComponent<VRCObjectPool>(); //Get the weapon pool
+        Networking.SetOwner(Networking.LocalPlayer, this.transform.parent.gameObject); //Sets the owner to the object pool as weapons are parented under the object pool
+        weaponPool.Return(this.gameObject); //Return the weapon to the object pool
     }
 }

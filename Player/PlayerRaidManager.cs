@@ -46,8 +46,8 @@ public class PlayerRaidManager : UdonSharpBehaviour
         //playerStats.UpdateMenuMoneyGUI(); //This code is redundant due to VR update method
         PlayerVRHUD.UpdateMoneyCounter(playerStats.PlayerMoney);
 
-        //Check if the player extracted with more than 500 dollars
-        if(raidInventory.GetCurrentRaidWallet() >= 500)
+        //Check if the player extracted with more than 1000 dollars
+        if(raidInventory.GetCurrentRaidWallet() >= 100)
         {
             //Play big victory sound
             PlayBigVictorySound();
@@ -70,9 +70,6 @@ public class PlayerRaidManager : UdonSharpBehaviour
         //Reset RaidWallet
         raidInventory.ResetRaidWallet();
         Debug.Log($"Reset RaidWallet to {raidInventory.GetCurrentRaidWallet()}");
-        //Reset StoragePoints
-        raidInventory.ResetStoragePoints();
-        Debug.Log($"Reset StoragePoints to {raidInventory.StoragePoints}");
         
         //Reset PlayerHealth back to full if player extracted successfully
         if(playerDeath)
@@ -87,10 +84,17 @@ public class PlayerRaidManager : UdonSharpBehaviour
             //Play death sound
             Debug.Log("Playing death sound.");
             deathSFX.Play();
+
+            //Reset Storage Points back to Default
+            raidInventory.StoragePointCap = 25;
+            
         }
 
+        //Reset Storage Points to maximum
+        raidInventory.ResetStoragePoints();
+
         //Reset HUD
-        PlayerVRHUD.UpdateSPCount(raidInventory.StoragePoints);
+        PlayerVRHUD.UpdateSPCount(raidInventory.StoragePoints, raidInventory.StoragePointCap);
         PlayerVRHUD.UpdateHPCount(playerStats.PlayerHealth, playerStats.MaximumHealth);
         PlayerVRHUD.UpdateMoneyCounter(playerStats.PlayerMoney);
 

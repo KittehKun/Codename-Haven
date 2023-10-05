@@ -14,6 +14,7 @@ public class PlayerStats : UdonSharpBehaviour
     public int PlayerLevel {get; set;} = 1; //Default Player Level | Earned by killing enemies and completing tasks
     public int PlayerXP {get; set;} = 0; //Default Player XP | Earned by killing enemies and completing tasks
     public int XPToNextLevel = 100; //Default XP needed to level up | Increases by 100 each level
+    public bool HasBackpack {get; set;} = false; //Default HasBackpack | Used for checking if player has a backpack
     public PlayerRaidManager playerRaidManager; //PlayerRaidManager | Assigned in Unity | Used for resetting player inventory
     void Start()
     {
@@ -47,6 +48,16 @@ public class PlayerStats : UdonSharpBehaviour
     {
         Debug.Log("Player is dead!");
         playerRaidManager.ResetPlayer(true);
+        
+        //Display death screen
+        PlayerVRHUD.ShowDeathScreen();
+
+        this.SendCustomEventDelayedSeconds("TriggerHideDeathScreen", 7f); //Hide death screen after 7 seconds as audio clip is 7 seconds
+    }
+
+    public void TriggerHideDeathScreen()
+    {
+        PlayerVRHUD.HideDeathScreen();
     }
 
     //Gets PlayerMoney from Player

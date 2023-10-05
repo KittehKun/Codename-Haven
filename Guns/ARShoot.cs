@@ -1,5 +1,7 @@
-﻿using UdonSharp;
+﻿using Cysharp.Threading.Tasks.Triggers;
+using UdonSharp;
 using UnityEngine;
+using VRC.SDK3.Components;
 using VRC.SDKBase;
 using VRC.Udon;
 
@@ -34,6 +36,9 @@ public class ARShoot : UdonSharpBehaviour
     //LayerMask Integer
     private int layerNumber = 31; //Used for raycast | 32nd layer is the Enemy layer
     private int layerMask; //Used for raycast | Defined in Start() method
+
+    //Object Pool
+    [HideInInspector] [UdonSynced] public int ownerID; //Used for returning the AR to the Object Pool
 
     void Start()
     {
@@ -93,7 +98,7 @@ public class ARShoot : UdonSharpBehaviour
         currentAmmo = MaxAmmo;
 
         //Set isReloading to false after 2 seconds
-        this.GetComponent<UdonBehaviour>().SendCustomEventDelayedSeconds("ResetReloadingFlag", 1f);
+        SendCustomEventDelayedSeconds("ResetReloadingFlag", 1f);
     
         //Play reload animation
         arAnimator.Play("BeginReload");
@@ -163,6 +168,10 @@ public class ARShoot : UdonSharpBehaviour
         //Play muzzle effect FX
         PlayMuzzleFX();
 
+        //Play Haptic Event for Object Owner
+        /* Networking.LocalPlayer.PlayHapticEventInHand(VRC_Pickup.PickupHand.Right, 0.2f, 0.4f, 0.2f);
+        Networking.LocalPlayer.PlayHapticEventInHand(VRC_Pickup.PickupHand.Left, 0.2f, 0.4f, 0.2f); */
+
         //Subtract 1 from currentAmmo
         currentAmmo -= 1;
 
@@ -182,12 +191,23 @@ public class ARShoot : UdonSharpBehaviour
         if (fullAuto && currentAmmo > 0) //Check to see if gun is full auto and if player has ammo
         {
             //Get this object's UdonBehaviour and do a SendCustomEventDelayedSeconds for Shoot()
-            this.GetComponent<UdonBehaviour>().SendCustomEventDelayedSeconds("Shoot", this.fullAutoDelay);
+            SendCustomEventDelayedSeconds("Shoot", this.fullAutoDelay);
         }
     }
 
     public void PlayGunShot()
     {
         GunShot.PlayOneShot(GunShot.clip);
+    }
+
+    public override void OnPlayerLeft(VRCPlayerApi player)
+    {
+        if(Utilities.IsValid(player)) return; //If player is valid, return
+        if(!Networking.IsMaster) return; //If player is not master, return
+        if(ownerID != player.playerId) return; //If player is not owner, return
+
+        VRCObjectPool weaponPool = this.transform.parent.gameObject.GetComponent<VRCObjectPool>(); //Get the weapon pool
+        Networking.SetOwner(Networking.LocalPlayer, this.transform.parent.gameObject); //Sets the owner to the object pool as weapons are parented under the object pool
+        weaponPool.Return(this.gameObject); //Return the weapon to the object pool
     }
 }
