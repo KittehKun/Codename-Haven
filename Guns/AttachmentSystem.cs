@@ -5,20 +5,109 @@ using VRC.SDKBase;
 using VRC.Udon;
 
 //The purpose of this script is to handle the logic of attachments for guns by enabling/disabling the correct objects
-//This script is attached to the gun itself
+//This script is attached to the gun itself | Each weapon innately supports suppressors, lasers, and flashlights
 public class AttachmentSystem : UdonSharpBehaviour
 {
-    private int[] scopes = new int[3]; //0 = none, 1 = Red Dot, 2 = Holo, 3 = ACOG, 4 = Sniper Scope
-    private int[] grips = new int[2]; //0 = none, 1 = Vertical, 2 = Angled
-    private bool suppressorEnabled = false;
-    private bool laserEnabled = false;
-    private bool flashlightEnabled = false;
-    public Transform attachmentsContainer; //The container for all the attachments | Assigned in Start() if not assigned in inspector
-    void Start()
+    public bool SupportsScope; //Check if gun supports scopes | Assigned in Unity based on gun
+    public bool SupportsGrip; //Check if gun supports grips | Assigned in Unity based on gun
+    public Transform attachmentsContainer; //Container for all attachments | Assigned in Unity
+    private bool suppressorEnabled = false; //Check if suppressor is enabled | Used for enabling/disabling suppressor
+
+    //This method is used for setting the scope on the gun through the attachment system
+    //Enables the correct scope and disables the rest
+    public void SetScope(int scopeID)
     {
-        if(attachmentsContainer == null)
+        if(scopeID != -1)
         {
-            attachmentsContainer = transform.Find("_ATTACHMENTS");
+            //Enable scope
+            attachmentsContainer.GetChild(0).GetChild(scopeID).gameObject.SetActive(true);
+            //Disable all other scopes
+            for (int i = 1; i < attachmentsContainer.GetChild(0).childCount; i++)
+            {
+                attachmentsContainer.GetChild(0).GetChild(i).gameObject.SetActive(false);
+            }
+        } else
+        {
+            //Disable all scopes
+            for (int i = 0; i < attachmentsContainer.GetChild(0).childCount; i++)
+            {
+                attachmentsContainer.GetChild(0).GetChild(i).gameObject.SetActive(false);
+            }
+        }
+    }
+
+    //This method is used for setting the grip on the gun through the attachment system
+    //Enables the correct grip and disables the rest
+    public void SetGrip(int gripID)
+    {
+        if(gripID != -1)
+        {
+            //Enable grip
+            attachmentsContainer.GetChild(1).GetChild(gripID).gameObject.SetActive(true);
+            //Disable all other grips
+            for (int i = 1; i < attachmentsContainer.GetChild(1).childCount; i++)
+            {
+                attachmentsContainer.GetChild(1).GetChild(i).gameObject.SetActive(false);
+            }
+        } else
+        {
+            //Disable all grips
+            for (int i = 0; i < attachmentsContainer.GetChild(1).childCount; i++)
+            {
+                attachmentsContainer.GetChild(1).GetChild(i).gameObject.SetActive(false);
+            }
+        }
+    }
+
+    //This method is used for setting the accessory on the gun through the attachment system
+    //Enables the correct accessory and disables the rest
+    public void SetAccessory(int accessoryID)
+    {
+        if(accessoryID != -1)
+        {
+            //Enable accessory
+            attachmentsContainer.GetChild(2).GetChild(accessoryID).gameObject.SetActive(true);
+            //Disable all other accessories
+            for (int i = 1; i < attachmentsContainer.GetChild(2).childCount; i++)
+            {
+                attachmentsContainer.GetChild(2).GetChild(i).gameObject.SetActive(false);
+            }
+        } else
+        {
+            //Disable all accessories
+            for (int i = 0; i < attachmentsContainer.GetChild(2).childCount; i++)
+            {
+                attachmentsContainer.GetChild(2).GetChild(i).gameObject.SetActive(false);
+            }
+        }
+    }
+
+    //This method is used for setting the suppressor on the gun through the attachment system
+    //Enables the correct suppressor and disables the rest
+    public void ToggleSuppresor()
+    {
+        if(!suppressorEnabled)
+        {
+            suppressorEnabled = true;
+            attachmentsContainer.GetChild(3).GetChild(0).gameObject.SetActive(true);
+        } else
+        {
+            suppressorEnabled = false;
+            attachmentsContainer.GetChild(3).GetChild(0).gameObject.SetActive(false);
+        }
+    }
+
+    //This method will go through all children objects of the attachmentsContainer and disable them
+    //Should only be needed when returning a weapon to the objectPool
+    public void ResetAllAttachments()
+    {
+        //Disable all attachments
+        for (int i = 0; i < attachmentsContainer.childCount; i++)
+        {
+            for(int j = 0; j < attachmentsContainer.GetChild(i).childCount; j++)
+            {
+                attachmentsContainer.GetChild(i).GetChild(j).gameObject.SetActive(false);
+            }
         }
     }
 }

@@ -134,4 +134,10 @@ public class PlayerRig : UdonSharpBehaviour
             this.equippedWeapon.GetComponent<Collider>().enabled = true;
         }
     }
+
+    //Returns the current equipped weapon
+    public GameObject GetEquippedWeapon()
+    {
+        return equippedWeapon;
+    }
 }
