@@ -17,10 +17,8 @@ public class BuyBackpack : UdonSharpBehaviour
         {
             case 0:
                 //Check if the player has enough money to buy the backpack
-                if(playerStats.PlayerMoney >= 800 && playerRaidInventory.StoragePointCap <= 25 || !playerStats.HasBackpack)
+                if(playerStats.PlayerMoney >= 800 && playerRaidInventory.StoragePointCap <= 25)
                 {
-                    //Give the player a backpack
-                    playerStats.HasBackpack = true; //Give the player a backpack
                     playerStats.PlayerMoney -= 800; //Remove the cost of the backpack from the player's money
                     playerRaidInventory.StoragePointCap += 10; //Increase the player's storage point cap by 10
                     playerRaidInventory.StoragePoints = playerRaidInventory.StoragePointCap; //Increase the player's storage points by 10
@@ -35,10 +33,8 @@ public class BuyBackpack : UdonSharpBehaviour
                 break;
             case 1:
                 //Check if the player has enough money to buy the backpack
-                if(playerStats.PlayerMoney >= 1600 && playerRaidInventory.StoragePointCap <= 35 || !playerStats.HasBackpack)
+                if(playerStats.PlayerMoney >= 1600 && playerRaidInventory.StoragePointCap <= 35)
                 {
-                    //Give the player a backpack
-                    playerStats.HasBackpack = true; //Give the player a backpack
                     playerStats.PlayerMoney -= 1600; //Remove the cost of the backpack from the player's money
                     playerRaidInventory.StoragePointCap += 10; //Increase the player's storage point cap by 10
                     playerRaidInventory.StoragePoints = playerRaidInventory.StoragePointCap; //Increase the player's storage points by 10
@@ -53,10 +49,8 @@ public class BuyBackpack : UdonSharpBehaviour
                 break;
             case 2:
                 //Check if the player has enough money to buy the backpack
-                if(playerStats.PlayerMoney >= 3500 && playerRaidInventory.StoragePointCap <= 50 || !playerStats.HasBackpack)
+                if(playerStats.PlayerMoney >= 3500 && playerRaidInventory.StoragePointCap <= 50)
                 {
-                    //Give the player a backpack
-                    playerStats.HasBackpack = true; //Give the player a backpack
                     playerStats.PlayerMoney -= 3500; //Remove the cost of the backpack from the player's money
                     playerRaidInventory.StoragePointCap += 15; //Increase the player's storage point cap by 15
                     playerRaidInventory.StoragePoints = playerRaidInventory.StoragePointCap; //Increase the player's storage points by 15

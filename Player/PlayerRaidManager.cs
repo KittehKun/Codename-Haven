@@ -87,7 +87,6 @@ public class PlayerRaidManager : UdonSharpBehaviour
 
             //Reset Storage Points back to Default
             raidInventory.StoragePointCap = 25;
-            
         }
 
         //Reset Storage Points to maximum

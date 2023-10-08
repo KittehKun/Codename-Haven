@@ -123,19 +123,6 @@ public class EnemyScript : UdonSharpBehaviour
             Vector3 newDirection = Vector3.RotateTowards(transform.forward, targetDirection, 1f, 0f);
             transform.rotation = Quaternion.LookRotation(newDirection);
         }
-
-        if(isDead || isRespawning)
-        {
-            //Increment the timer
-            timer += Time.deltaTime;
-
-            //If the timer reaches 60, respawn the enemy
-            if(timer >= 30)
-            {
-                RespawnEnemy();
-                timer = 0;
-            }
-        }
     }
 
     public void ResetMovementFlags()
@@ -346,10 +333,13 @@ public class EnemyScript : UdonSharpBehaviour
         }
 
         //Respawn the enemy after 180 seconds using the RespawnEnemy() function
-        //SendCustomEventDelayedSeconds("RespawnEnemy", 180); //Commented out for now due to testing if this line is what's causing players to crash
+        SendCustomEventDelayedSeconds("RespawnEnemy", 180); //Commented out for now due to testing if this line is what's causing players to crash
 
         //Add XP to player
         playerStats.AddXP(Random.Range(5, 26));
+
+        //Add money to player
+        playerStats.AddMoney(Random.Range(10, 26));
     }
 
     //This function will be used to respawn the enemy

@@ -22,8 +22,9 @@ public class AttachmentSystem : UdonSharpBehaviour
             //Enable scope
             attachmentsContainer.GetChild(0).GetChild(scopeID).gameObject.SetActive(true);
             //Disable all other scopes
-            for (int i = 1; i < attachmentsContainer.GetChild(0).childCount; i++)
+            for (int i = 0; i < attachmentsContainer.GetChild(0).childCount; i++)
             {
+                if(i == scopeID) continue; //Skip the scope that is enabled (to prevent disabling it)
                 attachmentsContainer.GetChild(0).GetChild(i).gameObject.SetActive(false);
             }
         } else
@@ -45,8 +46,9 @@ public class AttachmentSystem : UdonSharpBehaviour
             //Enable grip
             attachmentsContainer.GetChild(1).GetChild(gripID).gameObject.SetActive(true);
             //Disable all other grips
-            for (int i = 1; i < attachmentsContainer.GetChild(1).childCount; i++)
+            for (int i = 0; i < attachmentsContainer.GetChild(1).childCount; i++)
             {
+                if(i == gripID) continue; //Skip the grip that is enabled (to prevent disabling it)
                 attachmentsContainer.GetChild(1).GetChild(i).gameObject.SetActive(false);
             }
         } else
@@ -68,8 +70,9 @@ public class AttachmentSystem : UdonSharpBehaviour
             //Enable accessory
             attachmentsContainer.GetChild(2).GetChild(accessoryID).gameObject.SetActive(true);
             //Disable all other accessories
-            for (int i = 1; i < attachmentsContainer.GetChild(2).childCount; i++)
+            for (int i = 0; i < attachmentsContainer.GetChild(2).childCount; i++)
             {
+                if(i == accessoryID) continue; //Skip the accessory that is enabled (to prevent disabling it)
                 attachmentsContainer.GetChild(2).GetChild(i).gameObject.SetActive(false);
             }
         } else
@@ -109,5 +112,7 @@ public class AttachmentSystem : UdonSharpBehaviour
                 attachmentsContainer.GetChild(i).GetChild(j).gameObject.SetActive(false);
             }
         }
+
+        Debug.Log("Attachments have been reset on weapon.");
     }
 }

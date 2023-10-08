@@ -19,6 +19,7 @@ public class BuyAccessory : UdonSharpBehaviour
 
     //Attachment System - Used for setting attachments on guns
     private AttachmentSystem attachmentSystem; //AttachmentSystem | Assigned during buy action | Used for setting attachments on guns
+    //May need to set this variable to public if the attachment system is crashing the game during runtime still due to UdonSharp behavior
 
     //Audio Sources
     public AudioSource buySFX; //Buy sound | Assigned in Unity | Used for playing buy sound
@@ -50,6 +51,8 @@ public class BuyAccessory : UdonSharpBehaviour
         //Check if player has enough money to buy attachment
         if(playerStats.PlayerMoney >= attachmentPrice && playerRig.WeaponAlreadyEquipped())
         {
+            playerStats.PlayerMoney -= attachmentPrice; //Subtract attachment price from player's money
+            PlayerVRHUD.UpdateMoneyCounter(playerStats.PlayerMoney); //Update money counter in VR
             //Player can buy attachment
             return true;
         } else
@@ -63,32 +66,29 @@ public class BuyAccessory : UdonSharpBehaviour
     {
         //Get attachment system from player's gun
         attachmentSystem = playerRig.GetEquippedWeapon().GetComponent<AttachmentSystem>();
+        if(attachmentSystem == null) return; //Check if attachment system is null (should never happen)
 
         switch (attachmentType)
         {
-            //Scopes
-            case 0:
+            case (int)AttachmentType.Scope:
                 if(!attachmentSystem.SupportsScope) return; //Check if gun supports scopes
                 //Enable the attachment on the gun
                 attachmentSystem.SetScope(attachmentID);
                 //Play Purchase Sound and play NPC success dialogue
                 PlaySuccessAudios();
                 break;
-            //Suppressors
-            case 1:
+            case (int)AttachmentType.Suppressor:
                 attachmentSystem.ToggleSuppresor();
                 //Play Purchase Sound and play NPC success dialogue
                 PlaySuccessAudios();
                 break;
-            //Grips
-            case 2:
+            case (int)AttachmentType.Grip:
                 if(!attachmentSystem.SupportsGrip) return; //Check if gun supports grips
                 attachmentSystem.SetGrip(attachmentID);
                 //Play Purchase Sound and play NPC success dialogue
                 PlaySuccessAudios();
                 break;
-            //Accessories
-            case 3:
+            case (int)AttachmentType.Accessory:
                 attachmentSystem.SetAccessory(attachmentID);
                 //Play Purchase Sound and play NPC success dialogue
                 PlaySuccessAudios();
@@ -98,6 +98,8 @@ public class BuyAccessory : UdonSharpBehaviour
                 Debug.LogError("Attachment type is invalid! KittehKun, your code is broken.");
                 break;
         }
+
+        //attachmentSystem = null; //Set attachment system to null to prevent memory leaks
     }
 
     private void PlaySuccessAudios()
@@ -106,4 +108,12 @@ public class BuyAccessory : UdonSharpBehaviour
         buySFX.Play();
         successSFXs[Random.Range(0, successSFXs.Length)].Play();
     }
+}
+
+enum AttachmentType : int
+{
+    Scope = 0,
+    Suppressor = 1,
+    Grip = 2,
+    Accessory = 3
 }
