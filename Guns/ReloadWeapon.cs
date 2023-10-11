@@ -21,12 +21,13 @@ public class ReloadWeapon : UdonSharpBehaviour
         }
 
         //Enable Collider locally | Disabled in Unity inspector by default
-        this.GetComponent<Collider>().enabled = true; //Debug Line for now
+        this.GetComponent<Collider>().enabled = true;
     }
 
     public override void Interact()
     {
         //Call the reload function on the equipped weapon | Triggered by the Collider of the magazine
-        equippedWeapon.GetComponent<UdonBehaviour>().SendCustomEvent("Reload");
+        bool isReloading = equippedWeapon.GetComponent<UdonBehaviour>().GetProgramVariable<bool>("isReloading");
+        if(!isReloading) equippedWeapon.GetComponent<UdonBehaviour>().SendCustomEvent("Reload");
     }
 }

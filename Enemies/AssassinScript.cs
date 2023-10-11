@@ -5,15 +5,15 @@ using UnityEngine.AI;
 using VRC.SDKBase;
 using VRC.Udon;
 
-//The purpose of this script is to handle enemy logic - will be attached to enemy prefabs
-public class EnemyScript : UdonSharpBehaviour
+//The purpose of this script is to handle the Assassin/Hunter miniboss enemy that will actively hunt the player
+public class AssassinScript : UdonSharpBehaviour
 {
     public Collider attackCollider; //This collider will be used to detect players using the OnPlayerTriggerEnter() event from the VRC Api | Assigned in Unity
     private NavMeshAgent agent; //This is the navmesh agent that will be used to move the enemy
     public Vector3 targetDestination; //This is the target destination that the enemy will move to
     public Vector3 spawnLocation; //This is the spawn location of the enemy
     public float enemyRange = 10f; //This is the range that the enemy will attempt to move to
-    public int enemyHealth = 100; //This is the health of the enemy
+    public int enemyHealth = 250; //This is the health of the enemy
 
     //Damage Values
     public int damageRangeMin; //This is the minimum damage that the enemy can deal | Assigned in Unity
@@ -30,8 +30,9 @@ public class EnemyScript : UdonSharpBehaviour
     public bool isDead = false; //This flag will be used to determine if the enemy is dead
     private bool isRespawning = false; //This flag will be used to determine if the enemy is respawning
 
-    //PlayerHitbox Script
+    //Player Scripts
     public PlayerStats playerStats; //Assigned in Unity | This script will be used to damage the player
+    public PlayerVRHUD playerHUD; //Assigned in Unity | This script will handle showing the player they are being hunted
 
     //VRCPlayer API
     private VRCPlayerApi localPlayer; //This is the local player | Assigned by Collider trigger
@@ -53,14 +54,16 @@ public class EnemyScript : UdonSharpBehaviour
     public AudioSource[] missSFXs; //Array of miss audio sources | Assigned in Unity
     public AudioSource weaponSFX; //Weapon audio source for enemy | Assigned in Unity
 
+    //Unique Audio Sources
+    public AudioSource beginHuntSFX; //Notifies the player with an audio cue that they are being hunted | Assigned in Unity
+
     //Spawn Locations on Death
-    public Transform spawnLocationContainer; //Transform with all enemy spawn locations | Assigned in Unity
-    private Transform[] spawnLocations; //Array of spawn locations | Assigned in Start()
+    public Transform[] spawnLocations; //Array of spawn locations | Assigned in Unity
 
     void Start()
     {
         //Set the agent variable
-        if(!agent) agent = this.GetComponent<NavMeshAgent>(); //If the agent is not set in Unity, set it here
+        agent = GetComponent<NavMeshAgent>(); //Just in case it's not set in Unity or it builds incorrectly
 
         //Set the spawnLocation to the enemy's current position
         spawnLocation = this.transform.position;
@@ -68,9 +71,6 @@ public class EnemyScript : UdonSharpBehaviour
         //Get the spotted and death audio sources
         this.spottedSFXs = spottedSFXContainer.GetComponentsInChildren<AudioSource>();
         this.deathSFXs = deathSFXContainer.GetComponentsInChildren<AudioSource>();
-
-        //Set the spawnLocations array to the spawnLocationContainer's childCount
-        spawnLocations = spawnLocationContainer.GetComponentsInChildren<Transform>();
 
         //Guard Code - Check if the NavMesh was baked properly and if the Agent is on the mesh. If not disable the GameObject.
         if (!agent.isOnNavMesh)

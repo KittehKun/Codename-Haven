@@ -1,6 +1,7 @@
 ﻿
 using UdonSharp;
 using UnityEngine;
+using UnityEngine.UI;
 using VRC.SDK3.Components;
 using VRC.SDKBase;
 using VRC.Udon;
@@ -9,9 +10,9 @@ using VRC.Udon;
 public class PistolShoot : UdonSharpBehaviour
 {
     //Damage and Raycast Variables
-    public float Range; //10 Units
-    public int Damage; //25 points to Health
-    private Transform barrel; //Variable used to find the barrel of the gun and later for raycast
+    public float Range; //Range of the Raycast
+    public int Damage; //Amount of damage the pistol does
+    [SerializeField] private Transform barrel; //Variable used to find the barrel of the gun and later for raycast
 
     //Audio Variables
     public AudioSource GunShot; //Assigned in Unity inspector
@@ -19,9 +20,15 @@ public class PistolShoot : UdonSharpBehaviour
     public AudioSource ReloadSound; //Assigned in Unity inspector
 
     //Ammo Variables
+    public int currentMagazineAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
     public int currentAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
-    public int MaxAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
-    public bool isReloading = false;
+    public int MagazineCapacity; //Assigned in Unity inspector based on the gun | Used for checking ammo count
+    private int MaxAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
+    private bool isReloading = false;
+
+    //Ammo Text Variables
+    public Text currentMagazineText; //Assigned in Unity inspector | Used for displaying ammo count
+    public Text currentAmmoText; //Assigned in Unity inspector | Used for displaying ammo count
 
     //Flags and Timers
     public bool isHeld = false; //This flag is used to check if the player is holding the pistol | Used for checking if the pistol should be returned to the ObjectPool
@@ -44,12 +51,14 @@ public class PistolShoot : UdonSharpBehaviour
         //Define layerMask
         layerMask = 1 << layerNumber; //Bitwise left shift operator to represent layer number by single bit | 31st layer is the Enemy layer
 
-        //Find the barrel of the gun
-        barrel = this.transform.Find("BarrelStart");
+        //Find the barrel of the gun if not already assigned in Inspector
+        if(!barrel) barrel = this.transform.Find("Barrel");
+
+        //Set ammo variables
+        currentMagazineAmmo = MagazineCapacity;
         currentAmmo = MaxAmmo;
 
         //By default, disable collider and gravity on the pistol
-        /* this.GetComponent<Collider>().enabled = false; */ //This line was causing the issue where Collider could not be locally enabled by Network events
         this.GetComponent<Rigidbody>().useGravity = false;
 
         //Set Collider to trigger
@@ -68,7 +77,7 @@ public class PistolShoot : UdonSharpBehaviour
         Debug.DrawRay(barrel.position, barrel.TransformDirection(direction * Range));
 
         //Check to see if player is pressing R to reload
-        if (Input.GetKeyDown(KeyCode.E) && currentAmmo < MaxAmmo && !isReloading)
+        if (Input.GetKeyDown(KeyCode.E) && currentMagazineAmmo < MaxAmmo && !isReloading)
         {
             Debug.Log("Player is reloading.");
             Reload();
@@ -99,12 +108,12 @@ public class PistolShoot : UdonSharpBehaviour
     //Function to fire weapon
     public override void OnPickupUseDown()
     {
-        if (currentAmmo > 0 && !isReloading)
+        if (currentMagazineAmmo > 0 && !isReloading)
         {
             Debug.Log("Player fired weapon.");
             Shoot();
         }
-        else if (currentAmmo == 0 && !isReloading)
+        else if (currentMagazineAmmo == 0 && !isReloading)
         {
             Debug.Log("Player is out of ammo.");
             PlayEmptySound();
@@ -128,7 +137,10 @@ public class PistolShoot : UdonSharpBehaviour
         PlayMuzzleFlash();
 
         //Subtract 1 from AmmoCount
-        currentAmmo -= 1;
+        currentMagazineAmmo -= 1;
+
+        //Update AmmoCount text
+        currentMagazineText.text = currentMagazineAmmo.ToString();
 
         //Define direction for Ray
         Vector3 direction = Vector3.left;
@@ -139,38 +151,45 @@ public class PistolShoot : UdonSharpBehaviour
         if (Physics.Raycast(barrel.position, barrel.TransformDirection(direction * Range), out RaycastHit HitData, Range, layerMask, QueryTriggerInteraction.Ignore)) //Check to see if Ray hit any colliders
         {
             //With layer mask defined, we can now check to see if the Ray hit an enemy
-            //Call TakeDamage method on enemy
-            HitData.transform.gameObject.GetComponent<EnemyScript>().TakeDamage(Damage);
+            //Define variable for enemy and assign it to the GameObject that the Ray hit | Will return null if Ray cannot get component of EnemyScript
+            EnemyScript enemy = HitData.transform.gameObject.GetComponent<EnemyScript>(); //Define enemy variable
+            if(!enemy) enemy.TakeDamage(Damage);
         }
     }
 
-    //Small method to use for network events
+    //Plays Empty Sound
     public void PlayEmptySound()
     {
         GunEmpty.Play();
     }
 
-    //Method used to reload the gun
+    //Reloads the weapon
     public void Reload()
-    {
+    {        
         isReloading = true;
 
         //Play reload sound
         ReloadSound.PlayOneShot(ReloadSound.clip);
 
         //Reset AmmoCount
-        currentAmmo = MaxAmmo;
+        currentMagazineAmmo = MaxAmmo;
 
+        //Update AmmoCount text
+        currentMagazineText.text = currentMagazineAmmo.ToString();
+
+        //Reset reloading flag after 0.33 seconds
         SendCustomEventDelayedSeconds("ResetReloadingFlag", 0.33f);
 
         pistolAnimator.Play("BeginReload");
     }
 
+    //Resets the reloading flag | Called by SendCustomEventDelayedSeconds in Reload method
     public void ResetReloadingFlag()
     {
         isReloading = false;
     }
 
+    //Method to return the weapon to transfer ownership of this weapon back to the Object Pool once the player leaves
     public override void OnPlayerLeft(VRCPlayerApi player)
     {
         if(Utilities.IsValid(player)) return; //If player is valid, return

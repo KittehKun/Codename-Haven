@@ -21,6 +21,18 @@ public class Leaderboard : UdonSharpBehaviour
             //Check if the player's money is greater than the current value in the array
             if(playerMoney > leaderBoard[i])
             {
+                if(leaderboardNames[i].text == Networking.LocalPlayer.displayName)
+                {
+                    //Check if the player has beaten their own score
+                    if(playerMoney > leaderBoard[i])
+                    {
+                        Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
+                        leaderBoard[i] = playerMoney;
+                        UpdateLeaderboardText(i, playerMoney);
+                        RequestSerialization();
+                        return; //Early return to prevent the player from being added to leaderboard multiple times
+                    }
+                }
                 //Set owner of Scoreboard to the localplayer
                 Networking.SetOwner(Networking.LocalPlayer, this.gameObject);
                 //Set the player's money to the current value in the array
@@ -29,8 +41,7 @@ public class Leaderboard : UdonSharpBehaviour
                 UpdateLeaderboardText(i, playerMoney);
                 //Request Serialization
                 RequestSerialization();
-                //Break out of the loop
-                break;
+                return;
             }
         }
     }
