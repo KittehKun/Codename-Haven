@@ -10,41 +10,45 @@ using VRC.Udon;
 public class PistolShoot : UdonSharpBehaviour
 {
     //Damage and Raycast Variables
-    public float Range; //Range of the Raycast
+    private readonly float Range = 30; //Range of the Raycast | For the pistol, this is 30 meters
     public int Damage; //Amount of damage the pistol does
     [SerializeField] private Transform barrel; //Variable used to find the barrel of the gun and later for raycast
 
     //Audio Variables
     public AudioSource GunShot; //Assigned in Unity inspector
+    public AudioSource SuppressedShot; //Assigned in Unity inspector
     public AudioSource GunEmpty; //Assigned in Unity inspector
     public AudioSource ReloadSound; //Assigned in Unity inspector
 
     //Ammo Variables
     public int currentMagazineAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
-    public int currentAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
+    private int currentTotalAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
     public int MagazineCapacity; //Assigned in Unity inspector based on the gun | Used for checking ammo count
     private int MaxAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
     private bool isReloading = false;
 
-    //Ammo Text Variables
-    public Text currentMagazineText; //Assigned in Unity inspector | Used for displaying ammo count
-    public Text currentAmmoText; //Assigned in Unity inspector | Used for displaying ammo count
+    //Ammo Text Fields
+    public Text AmmoCount; //Assigned in Unity inspector | Used for displaying ammo count
 
     //Flags and Timers
     public bool isHeld = false; //This flag is used to check if the player is holding the pistol | Used for checking if the pistol should be returned to the ObjectPool
 
     //Particle System
     public ParticleSystem muzzleFlashFX; //Assigned in Unity | Used for playing the muzzle flash effect on weapons
+    public ParticleSystem suppressedMuzzleFlashFX; //Assigned in Unity | Used for playing the muzzle flash effect on weapons
 
     //Animator
     public Animator pistolAnimator; //Assigned in Unity | Used for playing the pistol's animations
 
     //LayerMask Integer
-    private int layerNumber = 31;
+    private readonly int layerNumber = 31;
     private int layerMask;
 
     //Object Pool
     [HideInInspector] public int ownerID; //Used for returning the AR to the Object Pool
+
+    //Attachment System - Only used for toggling suppressed or unsuppressed fire
+    public AttachmentSystem attachmentSystem; //Assigned in Unity inspector | Used for toggling suppressed or unsuppressed fire
 
     void Start()
     {
@@ -56,7 +60,8 @@ public class PistolShoot : UdonSharpBehaviour
 
         //Set ammo variables
         currentMagazineAmmo = MagazineCapacity;
-        currentAmmo = MaxAmmo;
+        MaxAmmo = currentMagazineAmmo * 10;
+        currentTotalAmmo = MaxAmmo;
 
         //By default, disable collider and gravity on the pistol
         this.GetComponent<Rigidbody>().useGravity = false;
@@ -66,6 +71,9 @@ public class PistolShoot : UdonSharpBehaviour
 
         //Disable the pistol's barrel
         barrel.gameObject.SetActive(false);
+
+        //Set the ammo text
+        UpdateText();
     }
 
     void Update()
@@ -82,13 +90,17 @@ public class PistolShoot : UdonSharpBehaviour
             Debug.Log("Player is reloading.");
             Reload();
         }
-
     }
 
     //This method will emit the muzzle flash particle effect
     public void PlayMuzzleFlash()
     {
         muzzleFlashFX.Play();
+    }
+
+    public void PlaySuppressedMuzzleFlash()
+    {
+        suppressedMuzzleFlashFX.Play();
     }
 
     public override void OnPickup()
@@ -130,17 +142,23 @@ public class PistolShoot : UdonSharpBehaviour
         //Play Shoot animation
         pistolAnimator.Play("Shoot");
         
-        //Play gunshot sound
-        GunShot.Play();
-
-        //Play muzzle flash particle effect
-        PlayMuzzleFlash();
+        //Play gunshot sound depending on if the weapon is suppressed or not
+        bool isSuppressed = (bool) attachmentSystem.GetProgramVariable("suppressorEnabled");
+        if(isSuppressed) 
+        {
+            SuppressedShot.PlayOneShot(SuppressedShot.clip); //Audio Source
+            PlaySuppressedMuzzleFlash(); //Particle System
+        }
+        else
+        {
+            GunShot.PlayOneShot(GunShot.clip); //Audio Source
+            PlayMuzzleFlash(); //Particle System
+        }
 
         //Subtract 1 from AmmoCount
         currentMagazineAmmo -= 1;
 
-        //Update AmmoCount text
-        currentMagazineText.text = currentMagazineAmmo.ToString();
+        UpdateText();
 
         //Define direction for Ray
         Vector3 direction = Vector3.left;
@@ -172,10 +190,18 @@ public class PistolShoot : UdonSharpBehaviour
         ReloadSound.PlayOneShot(ReloadSound.clip);
 
         //Reset AmmoCount
-        currentMagazineAmmo = MaxAmmo;
+        if(currentTotalAmmo >= MagazineCapacity) //Checks if there is enough ammo to fill the magazine - otherwise, just fill the magazine with the remaining ammo
+        {
+            currentTotalAmmo -= MagazineCapacity - currentMagazineAmmo;
+            currentMagazineAmmo = MagazineCapacity;
+        }
+        else
+        {
+            currentMagazineAmmo = currentTotalAmmo; //Fill the magazine with the remaining ammo - Currently loses the remaining ammo on last magazine
+            currentTotalAmmo = 0;
+        }
 
-        //Update AmmoCount text
-        currentMagazineText.text = currentMagazineAmmo.ToString();
+        UpdateText();
 
         //Reset reloading flag after 0.33 seconds
         SendCustomEventDelayedSeconds("ResetReloadingFlag", 0.33f);
@@ -187,6 +213,11 @@ public class PistolShoot : UdonSharpBehaviour
     public void ResetReloadingFlag()
     {
         isReloading = false;
+    }
+
+    private void UpdateText()
+    {
+        AmmoCount.text = $"{currentMagazineAmmo}/{currentTotalAmmo}";
     }
 
     //Method to return the weapon to transfer ownership of this weapon back to the Object Pool once the player leaves

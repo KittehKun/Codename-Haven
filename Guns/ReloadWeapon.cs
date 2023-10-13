@@ -27,7 +27,7 @@ public class ReloadWeapon : UdonSharpBehaviour
     public override void Interact()
     {
         //Call the reload function on the equipped weapon | Triggered by the Collider of the magazine
-        bool isReloading = equippedWeapon.GetComponent<UdonBehaviour>().GetProgramVariable<bool>("isReloading");
+        bool isReloading = (bool) equippedWeapon.GetComponent<UdonBehaviour>().GetProgramVariable("isReloading");
         if(!isReloading) equippedWeapon.GetComponent<UdonBehaviour>().SendCustomEvent("Reload");
     }
 }

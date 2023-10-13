@@ -11,7 +11,7 @@ public class AttachmentSystem : UdonSharpBehaviour
     public bool SupportsScope; //Check if gun supports scopes | Assigned in Unity based on gun
     public bool SupportsGrip; //Check if gun supports grips | Assigned in Unity based on gun
     public Transform attachmentsContainer; //Container for all attachments | Assigned in Unity
-    private bool suppressorEnabled = false; //Check if suppressor is enabled | Used for enabling/disabling suppressor
+    public bool suppressorEnabled = false; //Check if suppressor is enabled | Used for enabling/disabling suppressor
 
     //This method is used for setting the scope on the gun through the attachment system
     //Enables the correct scope and disables the rest
