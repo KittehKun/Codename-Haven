@@ -30,7 +30,7 @@ public class PistolShoot : UdonSharpBehaviour
     //Ammo Text Fields
     public Text AmmoCount; //Assigned in Unity inspector | Used for displaying ammo count
 
-    //Flags and Timers
+    //Flags
     public bool isHeld = false; //This flag is used to check if the player is holding the pistol | Used for checking if the pistol should be returned to the ObjectPool
 
     //Particle System
