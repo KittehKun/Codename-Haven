@@ -7,87 +7,50 @@ using VRC.Udon;
 //The purpose of this script is to centralize all loot generation logic into one script - this script is attached to the LootManager GameObject
 public class LootManager : UdonSharpBehaviour
 {
-    [SerializeField] private GameObject lootPrefabContainers; //Assigned in Unity | Used for finding the loot tables
-    private GameObject[] rarityTables; //Used for picking the rarity object | Assigned at Startup
     private GameObject[] commonTable;
     private GameObject[] uncommonTable;
     private GameObject[] rareTable;
     private GameObject[] extraordinaryTable;
     private GameObject[] specialTable;
-    
+
+    [Header("Loot Tables")]
+    [SerializeField] private Transform commonLootContainer; //Assigned in Unity inspector | Used for storing all common loot items
+    [SerializeField] private Transform uncommonLootContainer; //Assigned in Unity inspector | Used for storing all uncommon loot items
+    [SerializeField] private Transform rareLootContainer; //Assigned in Unity inspector | Used for storing all rare loot items
+    [SerializeField] private Transform extraordinaryLootContainer; //Assigned in Unity inspector | Used for storing all extraordinary loot items
+    [SerializeField] private Transform specialLootContainer; //Assigned in Unity inspector | Used for storing all special loot items
     
     void Start()
     {        
-        rarityTables = new GameObject[5]; //Initializes array with 5 slots for the different loot tables
-
-        for(int i = 0; i < rarityTables.Length; i++)
+        commonTable = new GameObject[commonLootContainer.childCount]; //Initializes array with the number of common loot items
+        foreach(Transform child in commonLootContainer) //Populates the commonTable array with all common loot items
         {
-            rarityTables[i] = lootPrefabContainers.transform.Find("Valueables").transform.GetChild(i).gameObject; //Expected: Common, Uncommon, Rare, Extraordinary, Special of type GameObject
-            Debug.Log($"Found {rarityTables[i].transform.gameObject} loot table!");
-        }
-        
-        //COMMON TABLE CODE BLOCK START
-        //Initialize commonTable with common item count
-        commonTable = new GameObject[rarityTables[0].transform.childCount];
-        //Fill commonTable with all common item GameObjects
-        int index = 0; //Used for the foreach loop
-        foreach(Transform transform in rarityTables[0].transform.GetComponentInChildren<Transform>())
-        {
-            commonTable[index] = transform.gameObject;
-            Debug.Log($"Common Item: {transform.gameObject.name} added to Common Table.");
-            index++;
+            commonTable[child.GetSiblingIndex()] = child.gameObject;
         }
 
-        //UNCOMMON TABLE CODE BLOCK START
-        //Initialize uncommonTable with uncommon item count
-        uncommonTable = new GameObject[rarityTables[1].transform.childCount];
-        //Fill uncommonTable with all uncommon item GameObjects
-        index = 0; //Reset index
-        foreach(Transform transform in rarityTables[1].transform.GetComponentInChildren<Transform>())
+        uncommonTable = new GameObject[uncommonLootContainer.childCount]; //Initializes array with the number of uncommon loot items
+        foreach(Transform child in uncommonLootContainer) //Populates the uncommonTable array with all uncommon loot items
         {
-            uncommonTable[index] = transform.gameObject;
-            Debug.Log($"Uncommon Item: {transform.gameObject.name} added to Uncommon Table.");
-            index++;
+            uncommonTable[child.GetSiblingIndex()] = child.gameObject;
         }
 
-        //RARE TABLE CODE BLOCK START
-        //Initialize rareTable with rare item count
-        rareTable = new GameObject[rarityTables[2].transform.childCount];
-        //Fill rareTable with all rare item GameObjects
-        index = 0; //Reset index
-        foreach(Transform transform in rarityTables[2].transform.GetComponentInChildren<Transform>())
+        rareTable = new GameObject[rareLootContainer.childCount]; //Initializes array with the number of rare loot items
+        foreach(Transform child in rareLootContainer) //Populates the rareTable array with all rare loot items
         {
-            rareTable[index] = transform.gameObject;
-            Debug.Log($"Rare Item: {transform.gameObject.name} added to Rare Table.");
-            index++;
+            rareTable[child.GetSiblingIndex()] = child.gameObject;
         }
 
-        //EXTRAORDINARY TABLE CODE BLOCK START
-        //Initialize extraordinaryTable with extraordinary item count
-        extraordinaryTable = new GameObject[rarityTables[3].transform.childCount];
-        //Fill extraordinaryTable with all extraordinary item GameObjects
-        index = 0; //Reset index
-        foreach(Transform transform in rarityTables[3].transform.GetComponentInChildren<Transform>())
+        extraordinaryTable = new GameObject[extraordinaryLootContainer.childCount]; //Initializes array with the number of extraordinary loot items
+        foreach(Transform child in extraordinaryLootContainer) //Populates the extraordinaryTable array with all extraordinary loot items
         {
-            extraordinaryTable[index] = transform.gameObject;
-            Debug.Log($"Extraordinary Item: {transform.gameObject.name} added to Extraordinary Table.");
-            index++;
+            extraordinaryTable[child.GetSiblingIndex()] = child.gameObject;
         }
 
-        //SPECIAL TABLE CODE BLOCK START
-        //Initialize specialTable with special item count
-        specialTable = new GameObject[rarityTables[4].transform.childCount];
-        //Fill specialTable with all special item GameObjects
-        index = 0; //Reset index
-        foreach(Transform transform in rarityTables[4].transform.GetComponentInChildren<Transform>())
+        specialTable = new GameObject[specialLootContainer.childCount]; //Initializes array with the number of special loot items
+        foreach(Transform child in specialLootContainer) //Populates the specialTable array with all special loot items
         {
-            specialTable[index] = transform.gameObject;
-            Debug.Log($"Special Item: {transform.gameObject.name} added to Special Table.");
-            index++;
+            specialTable[child.GetSiblingIndex()] = child.gameObject;
         }
-
-        //Output that all tables have been filled with loot items
-        Debug.Log("All loot tables have been filled with loot items!");
     }
 
     //Returns a random loot item from the specified rarity table | Called by GenerateLoot.cs
