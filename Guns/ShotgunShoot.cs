@@ -1,6 +1,7 @@
 ﻿
 using UdonSharp;
 using UnityEngine;
+using UnityEngine.UI;
 using VRC.SDK3.Components;
 using VRC.SDKBase;
 using VRC.Udon;
@@ -8,21 +9,27 @@ using VRC.Udon;
 public class ShotgunShoot : UdonSharpBehaviour
 {
     //Damage and Raycast Variables
-    public float Range; //Assigned in Unity inspector based on the gun | Used for raycast
+    private readonly float Range = 30; //Assigned in Unity inspector based on the gun | Used for raycast
     public int Damage; //Assigned in Unity inspector based on the gun | Used for calculating damage
-    private Transform barrel; //Variable used to find the barrel of the gun and later for raycast
+    [SerializeField] private Transform barrel; //Variable used to find the barrel of the gun and later for raycast
 
     //Audio Variables
     public AudioSource GunShot; //Assigned in Unity inspector
+    public AudioSource SuppressedShot; //Assigned in Unity inspector
     public AudioSource EmptyAudio; //Assigned in Unity inspector
     public AudioSource ReloadSound; //Assigned in Unity inspector
     public AudioSource PumpActionSFX; //Assigned in Unity inspector
 
     //Ammo Variables
-    public int currentAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
-    public int maxAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
+    public int currentMagazineAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
+    private int currentTotalAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
+    public int MagazineCapacity; //Assigned in Unity inspector based on the gun | Used for checking ammo count
+    private int MaxAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
     public Animator shotgunAnimator; //Assigned in Unity inspector | Used for playing shotgun animations and for shot delay
 
+    //Ammo Text Fields
+    public Text AmmoCount; //Assigned in Unity inspector | Used for displaying ammo count
+    
     //Flags
     public bool isReloading = false; //Used for checking if player is reloading or not
     public bool isHeld = false; //Used for checking if player is holding the shotgun or not
@@ -31,6 +38,7 @@ public class ShotgunShoot : UdonSharpBehaviour
 
     //Particle System
     public ParticleSystem muzzleFlashFX; //Assigned in Unity | Used for playing the muzzle flash animation
+    public ParticleSystem suppressedMuzzleFlashFX; //Assigned in Unity | Used for playing the muzzle flash animation
 
     //LayerMask Integer
     private int layerNumber = 31; //Used for raycast | 32nd layer is the Enemy layer
@@ -39,14 +47,21 @@ public class ShotgunShoot : UdonSharpBehaviour
     //Object Pool
     [HideInInspector] public int ownerID; //Used for returning the AR to the Object Pool
 
+    //Attachment System - Only used for toggling suppressed or unsuppressed fire
+    public AttachmentSystem attachmentSystem; //Assigned in Unity inspector | Used for toggling suppressed or unsuppressed fire
+
     void Start()
     {
         //Define layerMask
         layerMask = 1 << layerNumber; //Bitwise left shift operator to represent layer number by single bit | 31st layer is the Enemy layer
 
         //Find the barrel of the gun
-        barrel = this.transform.Find("BarrelStart");
-        currentAmmo = maxAmmo;
+        if(!barrel) barrel = this.transform.Find("Barrel");
+
+        //Set the current ammo to the magazine capacity
+        currentMagazineAmmo = MagazineCapacity;
+        MaxAmmo = MagazineCapacity * 10; //Set the max ammo to 10x the magazine capacity
+        currentTotalAmmo = MaxAmmo; //Set the current total ammo to the max ammo
 
         //By default, disable collider and gravity on the shotgun
         this.GetComponent<Rigidbody>().useGravity = false;
@@ -71,7 +86,7 @@ public class ShotgunShoot : UdonSharpBehaviour
         Debug.DrawRay(barrel.position, barrel.TransformDirection(direction * Range));
 
         //Check to see if player is pressing R to reload
-        if (Input.GetKeyDown(KeyCode.E) && currentAmmo < maxAmmo && !isReloading)
+        if (Input.GetKeyDown(KeyCode.E) && currentMagazineAmmo < MaxAmmo && !isReloading)
         {
             Debug.Log("Player is reloading.");
             Reload();
@@ -82,6 +97,12 @@ public class ShotgunShoot : UdonSharpBehaviour
     public void PlayMuzzleFX()
     {
         muzzleFlashFX.Play();
+    }
+
+    //Method to play suppressed Muzzle Flash
+    public void PlaySuppressedMuzzleFX()
+    {
+        suppressedMuzzleFlashFX.Play();
     }
 
     public override void OnPickup()
@@ -101,12 +122,12 @@ public class ShotgunShoot : UdonSharpBehaviour
     //Function to fire weapon
     public override void OnPickupUseDown()
     {
-        if (currentAmmo > 0 && !isReloading && isReady) //Check to see if player has ammo and if the shotgun is not in a shot delay animation
+        if (currentMagazineAmmo > 0 && !isReloading && isReady) //Check to see if player has ammo and if the shotgun is not in a shot delay animation
         {
             Debug.Log("Player fired weapon.");
             Shoot();
         }
-        else if (currentAmmo == 0 && !isReloading)
+        else if (currentMagazineAmmo == 0 && !isReloading)
         {
             Debug.Log("Player is out of ammo.");
             PlayEmptySound();
@@ -129,7 +150,19 @@ public class ShotgunShoot : UdonSharpBehaviour
         //Set isReloading to true
         isReloading = true;
 
-        currentAmmo = maxAmmo;
+        //Reset AmmoCount
+        if(currentTotalAmmo >= MagazineCapacity) //If current total ammo is greater than or equal to magazine capacity
+        {
+            currentTotalAmmo -= MagazineCapacity - currentMagazineAmmo; //Subtract the difference between magazine capacity and current magazine ammo from current total ammo
+            currentMagazineAmmo = MagazineCapacity; //Set current magazine ammo to magazine capacity
+        }
+        else //If current total ammo is less than magazine capacity
+        {
+            currentMagazineAmmo += currentTotalAmmo; //Add current total ammo to current magazine ammo
+            currentTotalAmmo = 0; //Set current total ammo to 0
+        }
+
+        UpdateText();
 
         //Set isReloading to false after 2 seconds
         SendCustomEventDelayedSeconds("ResetReloadingFlag", 1f);
@@ -164,14 +197,23 @@ public class ShotgunShoot : UdonSharpBehaviour
         //Set isReady to false
         isReady = false;
 
-        //Subtract 1 from currentAmmo
-        currentAmmo -= 1;
+        //Play gunshot sound depending on if the weapon is suppressed or not
+        bool isSuppressed = (bool) attachmentSystem.GetProgramVariable("suppressorEnabled");
+        if(isSuppressed)
+        {
+            SuppressedShot.PlayOneShot(SuppressedShot.clip); //Audio Source
+            PlaySuppressedMuzzleFX(); //Particle System
+        }
+        else
+        {
+            GunShot.PlayOneShot(GunShot.clip); //Audio Source
+            PlayMuzzleFX(); //Particle System
+        }
 
-        //Play gunshot audio
-        GunShot.Play();
+        //Subtract 1 from AmmoCount
+        currentMagazineAmmo -= 1;
 
-        //Play muzzle flash
-        PlayMuzzleFX();
+        UpdateText();
 
         //Send a custom event delayed by 0.5f
         if (isPumpShotgun)
@@ -192,9 +234,15 @@ public class ShotgunShoot : UdonSharpBehaviour
         {            
             //With layer mask defined, we can now check to see if the Ray hit an enemy
             //Call TakeDamage method on enemy
-            HitData.transform.gameObject.GetComponent<EnemyScript>().TakeDamage(Damage);
+            EnemyScript enemy = HitData.transform.gameObject.GetComponent<EnemyScript>(); //Define enemy variable
+            if(enemy) enemy.TakeDamage(Damage);
         }
 
+    }
+
+    private void UpdateText()
+    {
+        AmmoCount.text = $"{currentMagazineAmmo}/{currentTotalAmmo}";
     }
 
     public override void OnPlayerLeft(VRCPlayerApi player)
