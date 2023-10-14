@@ -217,7 +217,7 @@ public class SMGShoot : UdonSharpBehaviour
             //With layer mask defined, we can now check to see if the Ray hit an enemy
             //Call TakeDamage method on enemy
             EnemyScript enemy = HitData.transform.gameObject.GetComponent<EnemyScript>(); //Define enemy variable
-            if(!enemy) enemy.TakeDamage(Damage);
+            if(enemy) enemy.TakeDamage(Damage);
         }
 
         //If fullAuto is true, call Shoot method again after fullAutoDelay seconds

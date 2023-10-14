@@ -171,7 +171,7 @@ public class PistolShoot : UdonSharpBehaviour
             //With layer mask defined, we can now check to see if the Ray hit an enemy
             //Define variable for enemy and assign it to the GameObject that the Ray hit | Will return null if Ray cannot get component of EnemyScript
             EnemyScript enemy = HitData.transform.gameObject.GetComponent<EnemyScript>(); //Define enemy variable
-            if(!enemy) enemy.TakeDamage(Damage);
+            if(enemy) enemy.TakeDamage(Damage);
         }
     }
 

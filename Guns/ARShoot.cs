@@ -1,5 +1,6 @@
 ﻿using UdonSharp;
 using UnityEngine;
+using UnityEngine.UI;
 using VRC.SDK3.Components;
 using VRC.SDKBase;
 using VRC.Udon;
@@ -7,19 +8,25 @@ using VRC.Udon;
 public class ARShoot : UdonSharpBehaviour
 {
     //Damage and Raycast Variables
-    public float Range; //Assigned in Unity inspector based on the gun | Used for raycast
+    private readonly float Range = 75; //Assigned in Unity inspector based on the gun | Used for raycast
     public int Damage; //Assigned in Unity inspector based on the gun | Used for calculating damage
-    private Transform barrel; //Variable used to find the barrel of the gun and later for raycast
+    [SerializeField] private Transform barrel; //Variable used to find the barrel of the gun and later for raycast
 
     //Audio Variables
     public AudioSource GunShot; //Assigned in Unity inspector
+    public AudioSource SuppressedShot; //Assigned in Unity inspector
     public AudioSource GunEmpty; //Assigned in Unity inspector
     public AudioSource ReloadSound; //Assigned in Unity inspector
 
     //Ammo Variables
-    public int currentAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
-    public int MaxAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
+    public int currentMagazineAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
+    private int currentTotalAmmo;
+    public int MagazineCapacity; //Assigned in Unity inspector based on the gun | Used for checking ammo count
+    private int MaxAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
 
+    //Ammo Text Fields
+    public Text AmmoCount; //Assigned in Unity inspector | Used for displaying ammo count
+    
     //Flags
     public bool fullAuto; //Used for checking if gun is full auto or not
     public bool isReloading = false; //Used for checking if player is reloading or not
@@ -28,6 +35,7 @@ public class ARShoot : UdonSharpBehaviour
 
     //Particle System
     public ParticleSystem muzzleFlashFX; //Assigned in Unity inspector | Used for playing muzzle flash particle system
+    public ParticleSystem suppressedMuzzleFlashFX; //Assigned in Unity inspector | Used for playing muzzle flash particle system
 
     //Animator
     public Animator arAnimator; //Assigned in Unity inspector | Used for playing AR animations
@@ -37,16 +45,25 @@ public class ARShoot : UdonSharpBehaviour
     private int layerMask; //Used for raycast | Defined in Start() method
 
     //Object Pool
-    [HideInInspector] [UdonSynced] public int ownerID; //Used for returning the AR to the Object Pool
+    [HideInInspector] public int ownerID; //Used for returning the AR to the Object Pool
+
+    //Attachment System - Only used for toggling suppressed or unsuppressed fire
+    public AttachmentSystem attachmentSystem; //Assigned in Unity inspector | Used for toggling suppressed or unsuppressed fire
 
     void Start()
     {
         //Define layerMask
         layerMask = 1 << layerNumber; //Bitwise left shift operator to represent layer number by single bit | 31st layer is the Enemy layer
 
-        //Find the barrel of the gun
-        barrel = this.transform.Find("BarrelStart");
-        currentAmmo = MaxAmmo;
+        //Find the barrel of the gun if not already assigned in Inspector
+        if(!barrel) barrel = this.transform.Find("Barrel");
+
+        //Set current ammo to magazine capacity
+        currentMagazineAmmo = MagazineCapacity;
+        MaxAmmo = MagazineCapacity * 10; //Set max ammo to 10x magazine capacity
+        currentTotalAmmo = MaxAmmo; //Set current total ammo to max ammo
+
+        UpdateText();
 
         //By default, disable gravity on the AR
         this.GetComponent<Rigidbody>().useGravity = false;
@@ -73,7 +90,7 @@ public class ARShoot : UdonSharpBehaviour
         Debug.DrawRay(barrel.position, barrel.TransformDirection(direction * Range));
 
         //Check to see if player is pressing R to reload
-        if (Input.GetKeyDown(KeyCode.E) && currentAmmo < MaxAmmo && !isReloading)
+        if (Input.GetKeyDown(KeyCode.E) && currentMagazineAmmo < MaxAmmo && !isReloading)
         {
             Debug.Log("Player is reloading.");
             Reload();
@@ -86,6 +103,12 @@ public class ARShoot : UdonSharpBehaviour
         muzzleFlashFX.Play();
     }
 
+    //Play Suppressed Muzzle Flash effect
+    public void PlaySuppressedMuzzleFX()
+    {
+        suppressedMuzzleFlashFX.Play();
+    }
+
     public void Reload()
     {
         //Play reload sound
@@ -94,7 +117,19 @@ public class ARShoot : UdonSharpBehaviour
         //Set isReloading to true
         isReloading = true;
 
-        currentAmmo = MaxAmmo;
+        //Reset AmmoCount text
+        if(currentTotalAmmo >= MagazineCapacity) //If currentTotalAmmo is greater than or equal to MagazineCapacity
+        {
+            currentTotalAmmo -= MagazineCapacity - currentMagazineAmmo;
+            currentMagazineAmmo = MagazineCapacity;
+        }
+        else //If current total ammo is less than MagazineCapacity
+        {
+            currentMagazineAmmo = currentTotalAmmo;
+            currentTotalAmmo = 0;
+        }
+
+        UpdateText();
 
         //Set isReloading to false after 2 seconds
         SendCustomEventDelayedSeconds("ResetReloadingFlag", 1f);
@@ -127,13 +162,13 @@ public class ARShoot : UdonSharpBehaviour
     //Function to fire weapon
     public override void OnPickupUseDown()
     {
-        if (currentAmmo > 0 && !isReloading)
+        if (currentMagazineAmmo > 0 && !isReloading)
         {
             Debug.Log("Player fired weapon.");
             fullAuto = true;
             Shoot();
         }
-        else if (currentAmmo == 0 && !isReloading)
+        else if (currentMagazineAmmo == 0 && !isReloading)
         {
             Debug.Log("Player is out of ammo.");
             PlayEmptySound();
@@ -161,18 +196,27 @@ public class ARShoot : UdonSharpBehaviour
         //Play Shoot animation
         arAnimator.Play("Shoot");
         
-        //Play gunshot sound
-        PlayGunShot();
-
-        //Play muzzle effect FX
-        PlayMuzzleFX();
+        //Play gunshot sound depending on if the weapon is suppressed or not
+        bool isSuppressed = (bool) attachmentSystem.GetProgramVariable("suppressorEnabled"); //Get the isSuppressed flag from the attachment system
+        if(isSuppressed)
+        {
+            SuppressedShot.PlayOneShot(SuppressedShot.clip); //Audio Source
+            PlaySuppressedMuzzleFX(); //Particle System
+        }
+        else
+        {
+            GunShot.PlayOneShot(GunShot.clip); //Audio Source
+            PlayMuzzleFX(); //Particle System
+        }
 
         //Play Haptic Event for Object Owner
         /* Networking.LocalPlayer.PlayHapticEventInHand(VRC_Pickup.PickupHand.Right, 0.2f, 0.4f, 0.2f);
         Networking.LocalPlayer.PlayHapticEventInHand(VRC_Pickup.PickupHand.Left, 0.2f, 0.4f, 0.2f); */
 
         //Subtract 1 from currentAmmo
-        currentAmmo -= 1;
+        currentMagazineAmmo -= 1;
+
+        UpdateText();
 
         //Define direction for Ray
         Vector3 direction = Vector3.left;
@@ -184,10 +228,11 @@ public class ARShoot : UdonSharpBehaviour
         {
             //With layer mask defined, we can now check to see if the Ray hit an enemy
             //Call TakeDamage method on enemy
-            HitData.transform.gameObject.GetComponent<EnemyScript>().TakeDamage(Damage);
+            EnemyScript enemy = HitData.transform.gameObject.GetComponent<EnemyScript>();
+            if(enemy) enemy.TakeDamage(Damage);
         }
 
-        if (fullAuto && currentAmmo > 0) //Check to see if gun is full auto and if player has ammo
+        if (fullAuto && currentMagazineAmmo > 0) //Check to see if gun is full auto and if player has ammo
         {
             //Get this object's UdonBehaviour and do a SendCustomEventDelayedSeconds for Shoot()
             SendCustomEventDelayedSeconds("Shoot", this.fullAutoDelay);
@@ -197,6 +242,12 @@ public class ARShoot : UdonSharpBehaviour
     public void PlayGunShot()
     {
         GunShot.PlayOneShot(GunShot.clip);
+    }
+
+    private void UpdateText()
+    {
+        //Update AmmoCount text
+        AmmoCount.text = $"{currentMagazineAmmo}/{currentTotalAmmo}";
     }
 
     public override void OnPlayerLeft(VRCPlayerApi player)
