@@ -1,6 +1,7 @@
 ﻿
 using UdonSharp;
 using UnityEngine;
+using UnityEngine.UI;
 using VRC.SDK3.Components;
 using VRC.SDKBase;
 using VRC.Udon;
@@ -8,20 +9,26 @@ using VRC.Udon;
 public class SniperShoot : UdonSharpBehaviour
 {
     //Damage and Raycast Variables
-    public float Range; //Assigned in Unity inspector based on the gun | Used for raycast
+    private readonly float Range = 150; //Assigned in Unity inspector based on the gun | Used for raycast
     public int Damage; //Assigned in Unity inspector based on the gun | Used for calculating damage
-    private Transform barrel; //Variable used to find the barrel of the gun and later for raycast    
+    [SerializeField] private Transform barrel; //Variable used to find the barrel of the gun and later for raycast    
 
     //Audio Variables
     public AudioSource GunShot; //Assigned in Unity inspector
+    public AudioSource SuppressedShot; //Assigned in Unity inspector
     public AudioSource emptySound; //Assigned in Unity inspector
     public AudioSource ReloadSound; //Assigned in Unity inspector
 
     //Ammo Variables
-    public int currentAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
-    public int maxAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
+    public int currentMagazineAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
+    private int currentTotalAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
+    public int MagazineCapacity; //Assigned in Unity inspector based on the gun | Used for checking ammo count
+    private int MaxAmmo; //Assigned in Unity inspector based on the gun | Used for checking ammo count
     public Animator sniperAnimator; //Assigned in Unity inspector | Used for playing sniper animations and for shot delay
 
+    //Ammo Text Fields
+    public Text AmmoCount; //Assigned in Unity inspector | Used for displaying ammo count
+    
     //Flags
     public bool isReloading = false; //Used for checking if player is reloading or not
     public bool isHeld = false; //Used for checking if player is holding the sniper or not
@@ -29,6 +36,7 @@ public class SniperShoot : UdonSharpBehaviour
 
     //Particle System
     public ParticleSystem muzzleFlashFX; //Assigned in Unity | Used for playing the muzzle flash animation
+    public ParticleSystem suppressedMuzzleFlashFX; //Assigned in Unity | Used for playing the muzzle flash animation
 
     //LayerMask Integer
     private int layerNumber = 31; //Used for raycast | 32nd layer is the Enemy layer
@@ -37,16 +45,23 @@ public class SniperShoot : UdonSharpBehaviour
     //Object Pool
     [HideInInspector] public int ownerID; //Used for returning the AR to the Object Pool
 
+    //Attachment System - Only used for toggling suppressed or unsuppressed fire
+    public AttachmentSystem attachmentSystem; //Assigned in Unity inspector | Used for toggling suppressed or unsuppressed fire
+
     void Start()
     {
         //Define layerMask
         layerMask = 1 << layerNumber; //Bitwise left shift operator to represent layer number by single bit | 31st layer is the Enemy layer
 
         //Find the barrel of the gun
-        barrel = this.transform.Find("BarrelStart");
+        if(!barrel) barrel = this.transform.Find("Barrel");
 
         //Set currentAmmo to maxAmmo
-        currentAmmo = maxAmmo;
+        currentMagazineAmmo = MagazineCapacity;
+        MaxAmmo = MagazineCapacity * 10; //10 magazines worth of ammo
+        currentTotalAmmo = MaxAmmo; //Set currentTotalAmmo to MaxAmmo
+
+        UpdateText();
 
         //By default, disable collider and gravity on the sniper
         this.GetComponent<Rigidbody>().useGravity = false;
@@ -71,7 +86,7 @@ public class SniperShoot : UdonSharpBehaviour
         Debug.DrawRay(barrel.position, barrel.TransformDirection(direction * Range));
 
         //Check to see if player is pressing R to reload
-        if (Input.GetKeyDown(KeyCode.E) && currentAmmo < maxAmmo && !isReloading)
+        if (Input.GetKeyDown(KeyCode.E) && currentMagazineAmmo < MaxAmmo && !isReloading)
         {
             Debug.Log("Player is reloading.");
             Reload();
@@ -81,6 +96,11 @@ public class SniperShoot : UdonSharpBehaviour
     public void PlayMuzzleFX()
     {
         muzzleFlashFX.Play();
+    }
+
+    public void PlaySuppressedMuzzleFlash()
+    {
+        suppressedMuzzleFlashFX.Play();
     }
 
     public override void OnPickup()
@@ -100,13 +120,13 @@ public class SniperShoot : UdonSharpBehaviour
     //Function to fire weapon
     public override void OnPickupUseDown()
     {
-        if (currentAmmo > 0 && !isReloading && isReadyToFire) //Check to see if player has ammo and if the sniper is not in a shot delay animation
+        if (currentMagazineAmmo > 0 && !isReloading && isReadyToFire) //Check to see if player has ammo and if the sniper is not in a shot delay animation
         {
             Debug.Log("Player fired weapon.");
             Shoot();
             isReadyToFire = false;
         }
-        else if (currentAmmo == 0 && !isReloading)
+        else if (currentMagazineAmmo == 0 && !isReloading)
         {
             Debug.Log("Player is out of ammo.");
             PlayEmpty();
@@ -131,7 +151,19 @@ public class SniperShoot : UdonSharpBehaviour
         //Set isReloading to true
         isReloading = true;
 
-        currentAmmo = maxAmmo;
+        //Reset AmmoCount
+        if(currentTotalAmmo >= MagazineCapacity) //If current total ammo is greater than or equal to magazine capacity
+        {
+            currentTotalAmmo -= MagazineCapacity - currentMagazineAmmo; //Subtract the difference between magazine capacity and current magazine ammo from current total ammo
+            currentMagazineAmmo = MagazineCapacity; //Set current magazine ammo to magazine capacity
+        }
+        else //If current total ammo is less than magazine capacity
+        {
+            currentMagazineAmmo += currentTotalAmmo; //Add current total ammo to current magazine ammo
+            currentTotalAmmo = 0; //Set current total ammo to 0
+        }
+
+        UpdateText();
 
         //Set isReloading to false after 2 seconds
         SendCustomEventDelayedSeconds("ResetReloadingFlag", 1f);
@@ -158,14 +190,26 @@ public class SniperShoot : UdonSharpBehaviour
         //Play Shoot animation
         sniperAnimator.Play("Shoot");
         
-        //Play gunshot
-        GunShot.Play();
+        bool isSuppressed = (bool) attachmentSystem.GetProgramVariable("suppressorEnabled"); //Get isSuppressed variable from attachment system
+        if(isSuppressed) //If isSuppressed is true
+        {
+            //Play suppressed shot sound
+            SuppressedShot.PlayOneShot(SuppressedShot.clip);
 
-        //Play muzzle effect
-        PlayMuzzleFX();
+            //Play suppressed muzzle flash
+            PlaySuppressedMuzzleFlash();
+        }
+        else //If isSuppressed is false
+        {
+            //Play unsuppressed shot sound
+            GunShot.PlayOneShot(GunShot.clip);
+
+            //Play unsuppressed muzzle flash
+            PlayMuzzleFX();
+        }
 
         //Subtract 1 from currentAmmo
-        currentAmmo -= 1;
+        currentMagazineAmmo -= 1;
 
         //Define direction for Ray
         Vector3 direction = Vector3.left;
@@ -177,11 +221,18 @@ public class SniperShoot : UdonSharpBehaviour
         {
             //With layer mask defined, we can now check to see if the Ray hit an enemy
             //Call TakeDamage method on enemy
-            HitData.transform.gameObject.GetComponent<EnemyScript>().TakeDamage(Damage);
+            EnemyScript enemy = HitData.transform.gameObject.GetComponent<EnemyScript>(); //Define enemy variable
+            if(enemy) enemy.TakeDamage(Damage);
         }
 
         //Reset ready to fire flag after 0.66 secondsq
         SendCustomEventDelayedSeconds("ResetReadyToFireFlag", 0.66f);
+    }
+
+    private void UpdateText()
+    {
+        //Update AmmoCount text
+        AmmoCount.text = $"{currentMagazineAmmo}/{currentTotalAmmo}";
     }
 
     public override void OnPlayerLeft(VRCPlayerApi player)
