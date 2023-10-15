@@ -22,6 +22,7 @@ public class AttachmentSystem : UdonSharpBehaviour
     //Enables the correct scope and disables the rest
     public void SetScope(int scopeID)
     {
+        this.scopeID = scopeID;
         if(scopeID != -1)
         {
             //Enable scope
@@ -46,6 +47,7 @@ public class AttachmentSystem : UdonSharpBehaviour
     //Enables the correct grip and disables the rest
     public void SetGrip(int gripID)
     {
+        this.gripID = gripID;
         if(gripID != -1)
         {
             //Enable grip
@@ -132,6 +134,12 @@ public class AttachmentSystem : UdonSharpBehaviour
         //Sync Accessory
         SetAccessory(this.accessoryID);
         //Sync Suppressor
-        ToggleSuppresor();
+        if(suppressorEnabled)
+        {
+            attachmentsContainer.GetChild(3).GetChild(0).gameObject.SetActive(true);
+        } else
+        {
+            attachmentsContainer.GetChild(3).GetChild(0).gameObject.SetActive(false);
+        }
     }
 }
