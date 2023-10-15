@@ -11,7 +11,12 @@ public class AttachmentSystem : UdonSharpBehaviour
     public bool SupportsScope; //Check if gun supports scopes | Assigned in Unity based on gun
     public bool SupportsGrip; //Check if gun supports grips | Assigned in Unity based on gun
     public Transform attachmentsContainer; //Container for all attachments | Assigned in Unity
-    public bool suppressorEnabled = false; //Check if suppressor is enabled | Used for enabling/disabling suppressor
+    [UdonSynced] public bool suppressorEnabled = false; //Check if suppressor is enabled | Used for enabling/disabling suppressor
+
+    //Network Flags
+    [UdonSynced] private int scopeID = -1; //ID of scope | Used for enabling/disabling scope
+    [UdonSynced] private int gripID = -1; //ID of grip | Used for enabling/disabling grip
+    [UdonSynced] private int accessoryID = -1; //ID of accessory | Used for enabling/disabling accessory
 
     //This method is used for setting the scope on the gun through the attachment system
     //Enables the correct scope and disables the rest
@@ -65,6 +70,7 @@ public class AttachmentSystem : UdonSharpBehaviour
     //Enables the correct accessory and disables the rest
     public void SetAccessory(int accessoryID)
     {
+        this.accessoryID = accessoryID;
         if(accessoryID != -1)
         {
             //Enable accessory
@@ -114,5 +120,18 @@ public class AttachmentSystem : UdonSharpBehaviour
         }
 
         Debug.Log("Attachments have been reset on weapon.");
+    }
+
+    //This method is used for syncing attachments across the network
+    public override void OnDeserialization()
+    {
+        //Sync Scope
+        SetScope(this.scopeID);
+        //Sync Grip
+        SetGrip(this.gripID);
+        //Sync Accessory
+        SetAccessory(this.accessoryID);
+        //Sync Suppressor
+        ToggleSuppresor();
     }
 }
