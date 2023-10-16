@@ -193,36 +193,35 @@ public class EnemyScript : UdonSharpBehaviour
         if (!player.isLocal) return;
 
         //Check if the enemy can see the player using the playerHitbox GameObject and performing a Raycast
-        if (Physics.Raycast(this.transform.position, playerHitbox.transform.position - this.transform.position, out RaycastHit hit, enemyRange))
+        int layerNumber = 1 << 0; //This is the layer number for the Default layer
+        LayerMask mask = layerNumber;
+        if (Physics.Raycast(this.transform.position, playerHitbox.transform.position - this.transform.position, out RaycastHit hit, enemyRange, mask))
         {
             //If the enemy can see the player, attack the player
-            if (hit.collider.gameObject == playerHitbox.gameObject && !alreadyAttacked & isDead)
+            if (hit.collider.gameObject == playerHitbox.gameObject && !alreadyAttacked & !isDead)
             {
-                //Debug.Log("Enemy can see player!");
+                Debug.Log("Enemy can see player and is attacking!");
                 AttackPlayer();
             }
-        }
-        else
-        {
-            //Set the destination to the player's position
-            NavMeshHit navMeshHit;
-            NavMesh.SamplePosition(player.GetPosition(), out navMeshHit, enemyRange, 1);
+            else
+            {
+                if (!hasDestination && !isMoving)
+                {
+                    //Set the destination to the player's position
+                    NavMeshHit navMeshHit;
+                    NavMesh.SamplePosition(player.GetPosition(), out navMeshHit, enemyRange, 1);
 
-            targetDestination = navMeshHit.position;
-            hasDestination = true;
-            agent.SetDestination(targetDestination);
-            isMoving = true;
-            Debug.Log("Moving to player's position.");
-        }
+                    agent.ResetPath();
+                    agent.isStopped = false;
+                    targetDestination = navMeshHit.position;
+                    hasDestination = true;
+                    agent.SetDestination(targetDestination);
+                    isMoving = true;
+                    Debug.Log("Moving to player's position.");
+                }
 
-        /*if (!alreadyAttacked && !isDead)
-        {
-            AttackPlayer();
+            }
         }
-        else
-        {
-            Debug.Log("Agent is already attacking player.");
-        }*/
     }
 
     //This function will be called when a player exits the collider
@@ -252,6 +251,8 @@ public class EnemyScript : UdonSharpBehaviour
 
         //Stop the agent from moving
         agent.isStopped = true;
+        hasDestination = false;
+        isMoving = false;
 
         //Set the attackingPlayer flag to true
         attackingPlayer = true;
