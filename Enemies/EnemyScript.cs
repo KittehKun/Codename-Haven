@@ -3,11 +3,13 @@ using UdonSharp;
 using UnityEngine;
 using UnityEngine.AI;
 using VRC.SDKBase;
-using VRC.Udon;
 
 //The purpose of this script is to handle enemy logic - will be attached to enemy prefabs
 public class EnemyScript : UdonSharpBehaviour
 {
+    //Player Hitbox
+    [SerializeField] private PlayerHitbox playerHitbox; //This is the player hitbox that will be used to Raycast and check if the enemy can see the player | Assigned in Unity
+
     public Collider attackCollider; //This collider will be used to detect players using the OnPlayerTriggerEnter() event from the VRC Api | Assigned in Unity
     private NavMeshAgent agent; //This is the navmesh agent that will be used to move the enemy
     public Vector3 targetDestination; //This is the target destination that the enemy will move to
@@ -59,8 +61,11 @@ public class EnemyScript : UdonSharpBehaviour
 
     void Start()
     {
+        //Set the playerHitbox variable if it is not set in Unity
+        if (!playerHitbox) playerHitbox = GameObject.Find("PlayerHitbox").GetComponent<PlayerHitbox>();
+
         //Set the agent variable
-        if(!agent) agent = this.GetComponent<NavMeshAgent>(); //If the agent is not set in Unity, set it here
+        if (!agent) agent = this.GetComponent<NavMeshAgent>(); //If the agent is not set in Unity, set it here
 
         //Set the spawnLocation to the enemy's current position
         spawnLocation = this.transform.position;
@@ -134,7 +139,7 @@ public class EnemyScript : UdonSharpBehaviour
 
     //This function will generate a random destination for the enemy to move to
     public void GenerateRandomDestination()
-    {        
+    {
         //Generate a random position within a 10 unit radius of the enemy's spawn location
         Vector3 randomPosition = Random.insideUnitSphere * enemyRange;
         randomPosition += spawnLocation;
@@ -187,14 +192,37 @@ public class EnemyScript : UdonSharpBehaviour
         //If the player is not the local player, return
         if (!player.isLocal) return;
 
-        if (!alreadyAttacked && !isDead)
+        //Check if the enemy can see the player using the playerHitbox GameObject and performing a Raycast
+        if (Physics.Raycast(this.transform.position, playerHitbox.transform.position - this.transform.position, out RaycastHit hit, enemyRange))
+        {
+            //If the enemy can see the player, attack the player
+            if (hit.collider.gameObject == playerHitbox.gameObject && !alreadyAttacked & isDead)
+            {
+                //Debug.Log("Enemy can see player!");
+                AttackPlayer();
+            }
+        }
+        else
+        {
+            //Set the destination to the player's position
+            NavMeshHit navMeshHit;
+            NavMesh.SamplePosition(player.GetPosition(), out navMeshHit, enemyRange, 1);
+
+            targetDestination = navMeshHit.position;
+            hasDestination = true;
+            agent.SetDestination(targetDestination);
+            isMoving = true;
+            Debug.Log("Moving to player's position.");
+        }
+
+        /*if (!alreadyAttacked && !isDead)
         {
             AttackPlayer();
         }
         else
         {
             Debug.Log("Agent is already attacking player.");
-        }
+        }*/
     }
 
     //This function will be called when a player exits the collider
@@ -234,7 +262,7 @@ public class EnemyScript : UdonSharpBehaviour
         //Damage the player based on the damageChance percentage
         if (Random.Range(0, 100) <= damageChance)
         {
-            Debug.Log("Enemy has hit the player!");
+            //Debug.Log("Enemy has hit the player!");
 
             //Damage the player from the PlayerHitbox script
             playerStats.TakeDamage(Random.Range(damageRangeMin, damageRangeMax));
@@ -247,12 +275,10 @@ public class EnemyScript : UdonSharpBehaviour
             //Play Miss Audio Source
             PlayMissSFX().Play();
 
-            Debug.Log("Enemy has missed the player!");
+            //Debug.Log("Enemy has missed the player!");
         }
 
-
-
-        Debug.Log($"Player has been attacked and has {playerStats.PlayerHealth} health remaining.");
+        //Debug.Log($"Player has been attacked and has {playerStats.PlayerHealth} health remaining.");
 
         SendCustomEventDelayedSeconds("ResetAttackFlag", attackResetTime);
     }
@@ -357,7 +383,7 @@ public class EnemyScript : UdonSharpBehaviour
         attackingPlayer = false;
         isDead = false;
         isRespawning = false;
-        
+
         //Reset enemy health
         enemyHealth = 100;
 
@@ -366,10 +392,11 @@ public class EnemyScript : UdonSharpBehaviour
 
         //Sample a NavMesh poistion close to the enemy's new spawn location
         NavMesh.SamplePosition(spawnLocation, out NavMeshHit point, enemyRange, 1);
-        if(point.hit)
+        if (point.hit)
         {
             spawnLocation = point.position;
-        } else
+        }
+        else
         {
             //Call RespawnEnemy again and break out of the function to try again
             RespawnEnemy();

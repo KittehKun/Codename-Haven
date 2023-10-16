@@ -1,23 +1,21 @@
 ﻿
 using UdonSharp;
 using UnityEngine;
-using VRC.SDKBase;
-using VRC.Udon;
 
 public class DisableSpawnMeshRenderer : UdonSharpBehaviour
 {
     private GameObject[] spawnPoints;
-    private GameObject spawnPoint; //Named _SPAWNS in Hierarchy | Script should be attached to GameObject named _SPAWNS
-    
+    private Transform spawnPoint; //Named _SPAWNS in Hierarchy | Script should be attached to GameObject named _SPAWNS
+
     void Start()
     {
-        spawnPoint = this.transform.gameObject;
+        spawnPoint = this.transform;
         //Add all children of _SPAWNS to spawnPoints array
         spawnPoints = new GameObject[spawnPoint.transform.childCount];
         for (int i = 0; i < spawnPoint.transform.childCount; i++)
         {
             spawnPoints[i] = spawnPoint.transform.GetChild(i).gameObject;
-            Debug.Log("Added " + spawnPoints[i].name + " to spawnPoints array");
+            //Debug.Log("Added " + spawnPoints[i].name + " to spawnPoints array");
         }
 
         //Disable mesh render for all spawn points
