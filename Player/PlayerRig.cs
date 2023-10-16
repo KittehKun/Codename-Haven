@@ -103,10 +103,9 @@ public class PlayerRig : UdonSharpBehaviour
         
         //Return the equippedWeapon to the objectPool
         Networking.SetOwner(Networking.LocalPlayer, objectPool.gameObject);
-        objectPool.Return(equippedWeapon);
-
         //Reset any attachments on the weapon
         equippedWeapon.GetComponent<AttachmentSystem>().ResetAllAttachments();
+        objectPool.Return(equippedWeapon);
 
         Debug.Log($"Returned {equippedWeapon.name} to pool.");
 

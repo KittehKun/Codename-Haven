@@ -262,13 +262,21 @@ public class ARShoot : UdonSharpBehaviour
 
     public override void OnPlayerLeft(VRCPlayerApi player)
     {
+        Debug.Log("OnPlayerLeft was called."); //Event is called but does not work as expected | Need to try removing the Utilities.IsValid(player) check and see if that works
         if(Utilities.IsValid(player)) return; //If player is valid, return
-        if(!Networking.IsMaster) return; //If player is not master, return
+        Debug.Log("Player is no longer valid.");
+        if(!Networking.IsMaster) return; //If local player is not master, return
+        Debug.Log("Local player is master.");
         if(ownerID != player.playerId) return; //If player is not owner, return
 
+        Debug.Log($"Player is local player AND master. Returning {this.gameObject.name} to pool.");
+
         attachmentSystem.ResetAllAttachments(); //Reset all attachments on the AR
+        Debug.Log($"Reset all attachments on {this.gameObject.name}.");
         VRCObjectPool weaponPool = this.transform.parent.gameObject.GetComponent<VRCObjectPool>(); //Get the weapon pool
         Networking.SetOwner(Networking.LocalPlayer, this.transform.parent.gameObject); //Sets the owner to the object pool as weapons are parented under the object pool
         weaponPool.Return(this.gameObject); //Return the weapon to the object pool
+
+        Debug.Log($"Returned {this.gameObject.name} to pool.");
     }
 }
