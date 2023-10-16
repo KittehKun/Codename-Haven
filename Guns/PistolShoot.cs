@@ -209,6 +209,16 @@ public class PistolShoot : UdonSharpBehaviour
         pistolAnimator.Play("BeginReload");
     }
 
+    //Refill ammo method - Called by PlayerRaidManager on raid end
+    public void RefillAmmo()
+    {
+        //Refill ammo
+        currentTotalAmmo = MaxAmmo;
+        currentMagazineAmmo = MagazineCapacity;
+
+        UpdateText();
+    }
+
     //Resets the reloading flag | Called by SendCustomEventDelayedSeconds in Reload method
     public void ResetReloadingFlag()
     {

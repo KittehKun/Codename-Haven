@@ -138,6 +138,16 @@ public class ARShoot : UdonSharpBehaviour
         arAnimator.Play("BeginReload");
     }
 
+    //Refill ammo method - Called by PlayerRaidManager on raid end
+    public void RefillAmmo()
+    {
+        //Refill ammo
+        currentTotalAmmo = MaxAmmo;
+        currentMagazineAmmo = MagazineCapacity;
+
+        UpdateText();
+    }
+
     public void ResetReloadingFlag()
     {
         //Set isReloading to false
@@ -210,8 +220,8 @@ public class ARShoot : UdonSharpBehaviour
         }
 
         //Play Haptic Event for Object Owner
-        /* Networking.LocalPlayer.PlayHapticEventInHand(VRC_Pickup.PickupHand.Right, 0.2f, 0.4f, 0.2f);
-        Networking.LocalPlayer.PlayHapticEventInHand(VRC_Pickup.PickupHand.Left, 0.2f, 0.4f, 0.2f); */
+        Networking.LocalPlayer.PlayHapticEventInHand(VRC_Pickup.PickupHand.Right, 0.2f, 0.4f, 0.2f);
+        Networking.LocalPlayer.PlayHapticEventInHand(VRC_Pickup.PickupHand.Left, 0.2f, 0.4f, 0.2f);
 
         //Subtract 1 from currentAmmo
         currentMagazineAmmo -= 1;
@@ -256,6 +266,7 @@ public class ARShoot : UdonSharpBehaviour
         if(!Networking.IsMaster) return; //If player is not master, return
         if(ownerID != player.playerId) return; //If player is not owner, return
 
+        attachmentSystem.ResetAllAttachments(); //Reset all attachments on the AR
         VRCObjectPool weaponPool = this.transform.parent.gameObject.GetComponent<VRCObjectPool>(); //Get the weapon pool
         Networking.SetOwner(Networking.LocalPlayer, this.transform.parent.gameObject); //Sets the owner to the object pool as weapons are parented under the object pool
         weaponPool.Return(this.gameObject); //Return the weapon to the object pool

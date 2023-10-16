@@ -146,6 +146,16 @@ public class SMGShoot : UdonSharpBehaviour
         smgAnimator.Play("BeginReload");
     }
 
+    //Refill ammo method - Called by PlayerRaidManager on raid end
+    public void RefillAmmo()
+    {
+        //Refill ammo
+        currentTotalAmmo = MaxAmmo;
+        currentMagazineAmmo = MagazineCapacity;
+
+        UpdateText();
+    }
+
     //Function to fire weapon
     public override void OnPickupUseDown()
     {

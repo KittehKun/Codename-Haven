@@ -171,6 +171,16 @@ public class ShotgunShoot : UdonSharpBehaviour
         shotgunAnimator.Play("BeginReload");
     }
 
+    //Refill ammo method - Called by PlayerRaidManager on raid end
+    public void RefillAmmo()
+    {
+        //Refill ammo
+        currentTotalAmmo = MaxAmmo;
+        currentMagazineAmmo = MagazineCapacity;
+
+        UpdateText();
+    }
+
     public void ResetReloadingFlag()
     {
         //Set isReloading to false
